@@ -27,6 +27,8 @@ namespace ProjectJuice
         /// <summary>Worm standing on this platform right now (null if none).</summary>
         public WormController Rider { get; private set; }
         public bool HasRider { get { return Rider != null; } }
+        /// <summary>Time the current rider got on (Time.time).</summary>
+        public float RiderSince { get; private set; }
 
         void Awake()
         {
@@ -94,7 +96,10 @@ namespace ProjectJuice
             WormController w = WormController.Instance;
             if (w != null && !w.IsDead && w.Physics.IsGrounded
                 && w.Physics.Ground != null && w.Physics.Ground.Carrier == (ISurfaceCarrier)this)
+            {
+                if (Rider == null) RiderSince = Time.time;
                 Rider = w;
+            }
             else
                 Rider = null;
         }
