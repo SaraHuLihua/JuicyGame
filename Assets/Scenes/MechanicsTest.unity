@@ -17322,8 +17322,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectJuice.AudioManager
   squishyMusic: {fileID: 8300000, guid: 4eeb1ba56fa342246958b5ee4f00fe1a, type: 3}
   heavyMusic: {fileID: 8300000, guid: 8768a23ab634dd741998ef3e2b5f3209, type: 3}
-  formChangeDelay: 1.5
-  crossfadeDuration: 1
+  formChangeDelay: 0.8
+  crossfadeDuration: 0.5
   squishyVolume: 0.435
   heavyVolume: 0.419
   musicMixerGroup: {fileID: 0}
@@ -17344,13 +17344,13 @@ MonoBehaviour:
   rockDestructionSfx:
   - {fileID: 8300000, guid: b4051d9b86d451546a36ec8e85f3796d, type: 3}
   squishyImpactVolume: 0.75
-  heavyImpactVolume: 0.205
+  heavyImpactVolume: 0.3
   landingVolume: 0.65
   squishyDeathVolume: 0.85
   heavyDeathVolume: 0.85
   deathVolume: 0.843
   respawnVolume: 0.75
-  materialSwitchVolume: 0.7
+  materialSwitchVolume: 0.65
   rockDestructionVolume: 0.9
   minimumImpactSpeed: 1.2
   minimumImpactVolumeScale: 0.35
