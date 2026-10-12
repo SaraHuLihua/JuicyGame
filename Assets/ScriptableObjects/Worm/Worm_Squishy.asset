@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bfe035aa9c5a4cd089dc2085e4b6004, type: 3}
+  m_Name: Worm_Squishy
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectJuice.WormMaterialProfile
+  material: 0
+  mass: 0.3
+  gravityScale: 0.7
+  radius: 0.375
+  bodyFriction: 0.6
+  minLaunchSpeed: 6.25
+  maxLaunchSpeed: 31.25
+  stopBounceSpeed: 0.78125
+  landingTangentialKeep: 0.92
+  breakSpeedKeep: 1
+  restitutionLint: 0.35
+  restitutionMetal: 0.7
+  restitutionMembrane: 1.05
+  restitutionGrease: 0.5
+  restitutionCilia: 0.2
+  restitutionBrittle: 0.97
+  color: {r: 0.66, g: 0.65, b: 0.95, a: 1}
+  squashAmount: 0.5

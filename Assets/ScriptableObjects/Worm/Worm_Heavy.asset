@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bfe035aa9c5a4cd089dc2085e4b6004, type: 3}
+  m_Name: Worm_Heavy
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectJuice.WormMaterialProfile
+  material: 1
+  mass: 2.5
+  gravityScale: 1.6
+  radius: 0.34375
+  bodyFriction: 1
+  minLaunchSpeed: 5.625
+  maxLaunchSpeed: 26.5625
+  stopBounceSpeed: 1.875
+  landingTangentialKeep: 0.3
+  breakSpeedKeep: 0.85
+  restitutionLint: 0
+  restitutionMetal: 0.08
+  restitutionMembrane: 0.45
+  restitutionGrease: 0
+  restitutionCilia: 0
+  restitutionBrittle: 0.1
+  color: {r: 0.44, g: 0.41, b: 0.77, a: 1}
+  squashAmount: 0

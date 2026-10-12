@@ -1,0 +1,1410 @@
+fileFormatVersion: 2
+guid: aea0c7d56ff1643c6a55fdfa9a39995f
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -4375076877047053520
+    second: FG_Props_1_0
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 0
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: FG_Props_1_0
+      rect:
+        serializedVersion: 2
+        x: 733
+        y: 3221
+        width: 754
+        height: 760
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 033c59ea2ca9843c0800000000000000
+      internalID: -4375076877047053520
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_1
+      rect:
+        serializedVersion: 2
+        x: 1579
+        y: 3221
+        width: 704
+        height: 760
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1408a9a7b32d34cbca68e1ce51db0772
+      internalID: 729342911
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_2
+      rect:
+        serializedVersion: 2
+        x: 2441
+        y: 3731
+        width: 548
+        height: 250
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e53f7d3d5aa61439d8b55014954ca1a9
+      internalID: -1873931301
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_3
+      rect:
+        serializedVersion: 2
+        x: 3245
+        y: 3919
+        width: 263
+        height: 92
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ac86daeaf0cba4c83ba04718f008cb38
+      internalID: -1795349475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_4
+      rect:
+        serializedVersion: 2
+        x: 3271
+        y: 3777
+        width: 232
+        height: 56
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5d7ac8613584343ff873937ce58cc445
+      internalID: 1244139087
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_5
+      rect:
+        serializedVersion: 2
+        x: 3541
+        y: 3779
+        width: 222
+        height: 76
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7084f8e4cfcfc458b98a28651d2e95ff
+      internalID: -1334784079
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_6
+      rect:
+        serializedVersion: 2
+        x: 3273
+        y: 3603
+        width: 204
+        height: 119
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fddc737048cea43cdafde78cb81d8c4b
+      internalID: 695419397
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_7
+      rect:
+        serializedVersion: 2
+        x: 3537
+        y: 3606
+        width: 204
+        height: 119
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 663c90d75d92d40c8b64c0e75cdcc1bd
+      internalID: -1460870754
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_8
+      rect:
+        serializedVersion: 2
+        x: 2427
+        y: 3221
+        width: 704
+        height: 358
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2fb459c9608b848158feef13ddc953ca
+      internalID: -153505064
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_9
+      rect:
+        serializedVersion: 2
+        x: 3221
+        y: 3403
+        width: 336
+        height: 70
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 65b8777218f834f989d6132014ccca36
+      internalID: -473560818
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_10
+      rect:
+        serializedVersion: 2
+        x: 3637
+        y: 3403
+        width: 208
+        height: 70
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 812fccbfd69c8475fa4d53aa2e010e4f
+      internalID: -219466620
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_11
+      rect:
+        serializedVersion: 2
+        x: 157
+        y: 2731
+        width: 325
+        height: 322
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 85758c7cfa1b740f39c59f02711a0c72
+      internalID: -289169777
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_12
+      rect:
+        serializedVersion: 2
+        x: 513
+        y: 2925
+        width: 305
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4a049c5b5c673465fab2c2182a7456ba
+      internalID: -986304408
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_13
+      rect:
+        serializedVersion: 2
+        x: 833
+        y: 2925
+        width: 172
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1a68b2c67dcf94ca69718be633362438
+      internalID: 1598017127
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_14
+      rect:
+        serializedVersion: 2
+        x: 1109
+        y: 2281
+        width: 738
+        height: 778
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 812421923fd114a059838c1dfe3c3deb
+      internalID: 921363581
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_15
+      rect:
+        serializedVersion: 2
+        x: 1983
+        y: 2279
+        width: 782
+        height: 778
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e8f3036e9c4a145a0a42e2831030d197
+      internalID: -119681482
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_16
+      rect:
+        serializedVersion: 2
+        x: 3141
+        y: 2507
+        width: 786
+        height: 783
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cd9eb0eafd0d24d8cb38fdbd4df70ab4
+      internalID: 119162171
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_17
+      rect:
+        serializedVersion: 2
+        x: 157
+        y: 2341
+        width: 326
+        height: 322
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 38e72e5bfdaa146d3a22cc1f29fc8be6
+      internalID: -1758954515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_18
+      rect:
+        serializedVersion: 2
+        x: 515
+        y: 2535
+        width: 304
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cce92599d63be4dbdb551225888f9e5f
+      internalID: 296772808
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_19
+      rect:
+        serializedVersion: 2
+        x: 835
+        y: 2535
+        width: 172
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7cdeaba1238b14868bfe4939d1bc5099
+      internalID: -1403265196
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_20
+      rect:
+        serializedVersion: 2
+        x: 515
+        y: 2203
+        width: 72
+        height: 126
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 96e50014b9d0a4e10a77a1965348cb5a
+      internalID: 617783147
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_21
+      rect:
+        serializedVersion: 2
+        x: 608
+        y: 2300
+        width: 10
+        height: 12
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fb0857f92fd724372aa417a513a7b15d
+      internalID: 569002642
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_22
+      rect:
+        serializedVersion: 2
+        x: 2798
+        y: 1903
+        width: 407
+        height: 420
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1fff91630e4e349c1a59338205417109
+      internalID: -1904032536
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_23
+      rect:
+        serializedVersion: 2
+        x: 3281
+        y: 1905
+        width: 406
+        height: 418
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b4fe2afd0b7ff41b5bdaf318b7bc6382
+      internalID: -168555915
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_24
+      rect:
+        serializedVersion: 2
+        x: 637
+        y: 2203
+        width: 80
+        height: 95
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 037b9625d25e642b381cfc7eb676c087
+      internalID: 121555481
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_25
+      rect:
+        serializedVersion: 2
+        x: 748
+        y: 2203
+        width: 67
+        height: 96
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8f9f7c349bc07443397cdba4e579a44f
+      internalID: -1990820104
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_26
+      rect:
+        serializedVersion: 2
+        x: 952
+        y: 2290
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1a8b65b4636f645ff947fb6143024b91
+      internalID: 1980603636
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_27
+      rect:
+        serializedVersion: 2
+        x: 820
+        y: 2246
+        width: 6
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bf28e01adffb94347a8feecc05cf23b4
+      internalID: 1244141961
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_28
+      rect:
+        serializedVersion: 2
+        x: 845
+        y: 2217
+        width: 48
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eb9e13a83993940049b45ea88994c4e8
+      internalID: 1159754617
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_29
+      rect:
+        serializedVersion: 2
+        x: 921
+        y: 2205
+        width: 50
+        height: 74
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 41d1cbf2cb0e048e5b41e89f2bd011f6
+      internalID: 1880232251
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_30
+      rect:
+        serializedVersion: 2
+        x: 1008
+        y: 2211
+        width: 43
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5f415770bb4e0401b823d399be8fe2da
+      internalID: 1526628574
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_31
+      rect:
+        serializedVersion: 2
+        x: 712
+        y: 2222
+        width: 6
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 36d61cd0bc94847b2bd1946b4e3a7891
+      internalID: -903451534
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_32
+      rect:
+        serializedVersion: 2
+        x: 1010
+        y: 2204
+        width: 4
+        height: 4
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 695a6dcad6b6b4b61a6495d62a55fcda
+      internalID: 812666716
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_33
+      rect:
+        serializedVersion: 2
+        x: 182
+        y: 79
+        width: 45
+        height: 2091
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cb7555d53f48345bc8a13f2aa8076d6a
+      internalID: -853376903
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_34
+      rect:
+        serializedVersion: 2
+        x: 303
+        y: 1097
+        width: 46
+        height: 1074
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b29099246670b4dcaaaa33c1d55d9665
+      internalID: -965899186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_35
+      rect:
+        serializedVersion: 2
+        x: 555
+        y: 2029
+        width: 124
+        height: 76
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d4b6b6b97964e4197a1665ce226dc16c
+      internalID: -1975985425
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_36
+      rect:
+        serializedVersion: 2
+        x: 711
+        y: 2029
+        width: 94
+        height: 116
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 18eaf7509049349248300616ceb09863
+      internalID: 1900319772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_37
+      rect:
+        serializedVersion: 2
+        x: 813
+        y: 2029
+        width: 112
+        height: 101
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 643b419da6a2f4263841968466e87ae1
+      internalID: -1194257459
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_38
+      rect:
+        serializedVersion: 2
+        x: 960
+        y: 2082
+        width: 8
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 155437bdaaacf45c1a0f927dca33a9fb
+      internalID: -307172274
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_39
+      rect:
+        serializedVersion: 2
+        x: 963
+        y: 2029
+        width: 58
+        height: 92
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c636a74e94a84495090a19adf0a25c0d
+      internalID: 1968205218
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_40
+      rect:
+        serializedVersion: 2
+        x: 1001
+        y: 1029
+        width: 932
+        height: 928
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1ffad541a3f0248afb9c60d694df0744
+      internalID: -655577123
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_41
+      rect:
+        serializedVersion: 2
+        x: 2135
+        y: 1363
+        width: 172
+        height: 186
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eb81d061f4bed421a873460cdbe9ca17
+      internalID: -503595922
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_42
+      rect:
+        serializedVersion: 2
+        x: 2435
+        y: 1363
+        width: 170
+        height: 314
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b0f268f67c73942a19d5ba565c5d6f04
+      internalID: -1001845984
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_43
+      rect:
+        serializedVersion: 2
+        x: 3281
+        y: 1414
+        width: 406
+        height: 419
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: abc9439dae909489c888916e92e08203
+      internalID: 1057696397
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_44
+      rect:
+        serializedVersion: 2
+        x: 2153
+        y: 1109
+        width: 360
+        height: 94
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 29a4489c602d645f29ff5d6a4a1bd2ee
+      internalID: -999837006
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_45
+      rect:
+        serializedVersion: 2
+        x: 2799
+        y: 155
+        width: 1190
+        height: 1192
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d45e23b85a281480ea641e7377466fad
+      internalID: 1503525693
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_46
+      rect:
+        serializedVersion: 2
+        x: 449
+        y: 981
+        width: 278
+        height: 34
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3b75804a32af14be4906f71f84355da8
+      internalID: 1689810616
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_47
+      rect:
+        serializedVersion: 2
+        x: 2093
+        y: 921
+        width: 478
+        height: 132
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2628332af1575400fbaa4fae35b37215
+      internalID: -375130795
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_48
+      rect:
+        serializedVersion: 2
+        x: 443
+        y: 851
+        width: 428
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 074ad7dbdec9d4dbbab8fc5a10dfc81a
+      internalID: 1887469931
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_49
+      rect:
+        serializedVersion: 2
+        x: 1033
+        y: 845
+        width: 644
+        height: 40
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 222bbb7ab0fe945aab8bedaf17f95b7c
+      internalID: -1940537110
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_50
+      rect:
+        serializedVersion: 2
+        x: 422
+        y: 735
+        width: 1237
+        height: 35
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: acf0efe94b34546e89898daa8ae57c77
+      internalID: 766554630
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_51
+      rect:
+        serializedVersion: 2
+        x: 2309
+        y: 153
+        width: 269
+        height: 666
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c3a330b1888bc4cc08d896fc43b78fe8
+      internalID: -983524976
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_52
+      rect:
+        serializedVersion: 2
+        x: 523
+        y: 269
+        width: 200
+        height: 200
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c22f21b2cca14413bb4968191dd67534
+      internalID: 111296094
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_53
+      rect:
+        serializedVersion: 2
+        x: 779
+        y: 233
+        width: 268
+        height: 270
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 20c52fd706a59474a95bdc0210122f96
+      internalID: 1197261449
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_54
+      rect:
+        serializedVersion: 2
+        x: 1119
+        y: 195
+        width: 348
+        height: 349
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 308167f2effda465d85d895c13e33b3b
+      internalID: 1040218329
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FG_Props_1_55
+      rect:
+        serializedVersion: 2
+        x: 1575
+        y: 127
+        width: 483
+        height: 484
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cab3da2233d47454baaf820b6759cca8
+      internalID: 219268414
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 1aa7edc9348344772a8e66236d57a33f
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      FG_Props_1_0: -4375076877047053520
+      FG_Props_1_1: 729342911
+      FG_Props_1_10: -219466620
+      FG_Props_1_11: -289169777
+      FG_Props_1_12: -986304408
+      FG_Props_1_13: 1598017127
+      FG_Props_1_14: 921363581
+      FG_Props_1_15: -119681482
+      FG_Props_1_16: 119162171
+      FG_Props_1_17: -1758954515
+      FG_Props_1_18: 296772808
+      FG_Props_1_19: -1403265196
+      FG_Props_1_2: -1873931301
+      FG_Props_1_20: 617783147
+      FG_Props_1_21: 569002642
+      FG_Props_1_22: -1904032536
+      FG_Props_1_23: -168555915
+      FG_Props_1_24: 121555481
+      FG_Props_1_25: -1990820104
+      FG_Props_1_26: 1980603636
+      FG_Props_1_27: 1244141961
+      FG_Props_1_28: 1159754617
+      FG_Props_1_29: 1880232251
+      FG_Props_1_3: -1795349475
+      FG_Props_1_30: 1526628574
+      FG_Props_1_31: -903451534
+      FG_Props_1_32: 812666716
+      FG_Props_1_33: -853376903
+      FG_Props_1_34: -965899186
+      FG_Props_1_35: -1975985425
+      FG_Props_1_36: 1900319772
+      FG_Props_1_37: -1194257459
+      FG_Props_1_38: -307172274
+      FG_Props_1_39: 1968205218
+      FG_Props_1_4: 1244139087
+      FG_Props_1_40: -655577123
+      FG_Props_1_41: -503595922
+      FG_Props_1_42: -1001845984
+      FG_Props_1_43: 1057696397
+      FG_Props_1_44: -999837006
+      FG_Props_1_45: 1503525693
+      FG_Props_1_46: 1689810616
+      FG_Props_1_47: -375130795
+      FG_Props_1_48: 1887469931
+      FG_Props_1_49: -1940537110
+      FG_Props_1_5: -1334784079
+      FG_Props_1_50: 766554630
+      FG_Props_1_51: -983524976
+      FG_Props_1_52: 111296094
+      FG_Props_1_53: 1197261449
+      FG_Props_1_54: 1040218329
+      FG_Props_1_55: 219268414
+      FG_Props_1_6: 695419397
+      FG_Props_1_7: -1460870754
+      FG_Props_1_8: -153505064
+      FG_Props_1_9: -473560818
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
