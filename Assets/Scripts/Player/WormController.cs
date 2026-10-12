@@ -51,6 +51,7 @@ namespace ProjectJuice
             physics = GetComponent<WormPhysics>();
             launcher = GetComponent<WormLauncher>();
             counter = GetComponent<LaunchCounter>();
+            GameJuice.Ensure();
             physics.SetMaterial(startMaterial);
             LastLandingPosition = transform.position;
 

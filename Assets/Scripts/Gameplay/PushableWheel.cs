@@ -153,6 +153,10 @@ namespace ProjectJuice
             body.SetVelocity(Vector2.zero);
             body.angularVelocity = 0f;
             body.bodyType = RigidbodyType2D.Static;
+            GameJuice.Shake(0.35f);
+            CircleCollider2D col = GetComponent<CircleCollider2D>();
+            float r = col != null ? col.radius * Mathf.Abs(transform.lossyScale.x) : 1f;
+            GameJuice.Puff(body.position + Vector2.down * r, Vector2.up, 10, 2f);
             onLocked.Invoke();
         }
 

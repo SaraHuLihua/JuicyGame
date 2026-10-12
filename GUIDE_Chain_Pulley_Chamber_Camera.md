@@ -422,6 +422,7 @@ It turns **clockwise in clicks**: a quick turn of one tooth, a small overshoot t
 - **Lock Input During Ride** (on): no aiming or switching until the worm lands after the last pad.
 - Juice: the cap squashes and wobbles and the spring stretches (**Squash**, **Wobble Time**), plus **Bounce Sound** and **On Bounce**.
 - **The positions were computed from the shaft's colliders**: every arc keeps at least 1.9 units from the walls (the worm's radius is 0.375), alternating right and left, up to the floor on the right of the shaft top (x 207, y 3.7), under the gears and away from the saw. The pads are at 1.8 world scale (they were 2.66), otherwise they don't fit the narrow parts of the shaft.
+- **Super bounce** (per pad, Header *Super bounce*): tick **Super Bounce** on the pads you want. That pad fires the worm much faster, reaching the next pad (or the Target) in **Super Flight Time** (0.3 s), on an almost straight line, with a white streak behind the worm (**Super Trail Width / Color**), a camera shake (**Super Shake**) and a bigger squash. With every pad on Super and 0.2 s each, the whole shaft takes about a second. The gizmo turns yellow and shows the super path (drawn with Rocky's gravity). Fast straight lines ignore the walls, so check the gizmo is clear.
 - To move one, select it and drag it. The green gizmo shows each arc; keep it clear of the walls. To change the exit, move `Bounce Exit`. To add a pad, duplicate one and fix the Next links.
 
 ## 13. Checkpoint
@@ -436,6 +437,23 @@ It turns **clockwise in clicks**: a quick turn of one tooth, a small overshoot t
 - **Spawn Point** (optional child) or **Spawn Height** (0.6) set where the worm reappears.
 - **T** (area reset) clears the checkpoint.
 
+## 15. Feel: launch feedback, shake, dust, menu zoom
+
+### Launch
+- Press **anywhere on the screen** and drag: the launch works exactly as if you had pressed on the worm (it always did; now a press made while the worm is still landing is also kept, and the aim starts as soon as it can launch).
+- While aiming, the **arc** (`Untitled_Artwork 14_4`) sits under the worm like a cradle and widens with power, and the **arrow** (`Untitled_Artwork 14_5`) points where you'll go and gets longer with power. Both pulse at full power. Settings on `Worm` prefab > `WormLauncher` > *Aim feedback*: **Arc Width**, **Arc Drop**, **Arc Follows Aim** (on = the arc sits behind the worm, opposite the launch), **Arrow Length**, **Arrow Gap**, **Arrow Width**, **Full Power Pulse**, colour and sorting order. Empty sprites = the old band.
+- The worm also winds up while you aim: it squashes toward the launch direction, more with more power (`WormVisual` > **Aim Squash**), and stretches when it goes.
+
+### GameJuice (shake, dust, freeze frame)
+- `Scripts/Core/GameJuice.cs` creates itself next to the worm. To tune it, add a **GameJuice** component to any object in the scene.
+- **Camera shake** on hard impacts (from **Impact Shake From** to **Impact Shake Full**, worm mass × speed), launches, the trampoline firing, chains snapping (more pieces, more shake), the wheel locking, super bounces and checkpoints. **Shake Strength** scales them all; `CameraFollow2D` > **Shake Multiplier** turns it off per camera.
+- **Dust** puffs on landings, launches, pads, the trampoline and the wheel.
+- **Hit-stop**: a 0.05 s freeze frame on very hard hits (**Hit Stop From**, e.g. Rocky falling from high up).
+
+### Main menu zoom
+- `Art/UI/Image.controller` now starts in an empty **Idle** state, so `mainMenuZoomIn` no longer plays when the menu opens.
+- On the button: `LevelLoader` (`ButtonTransitionScript`) plays the zoom first (**Zoom Animator** = the menu's `Image`, skipping the clip's first **Zoom Skip Start** 0.9 s where nothing moves), waits **Zoom Before Transition** (0.6 s), then starts the transition (**Transition Time**) and loads the scene. A second click is ignored.
+
 ## 14. First things to check in Play mode (not verified here)
 1. Fan: walk into the air as Bouncy. You should rise and float near the green line. As Rocky you should stay on the ground. If Bouncy floats too high or too low, change **Lift Force**. If the air streaks are too strong or too faint, change the **Air Color** alpha.
 2. Gear: it clicks clockwise one tooth at a time. If a click looks like more or less than one tooth, adjust **Step Angle**.
@@ -449,3 +467,6 @@ It turns **clockwise in clicks**: a quick turn of one tooth, a small overshoot t
 10. Wheel: push it as Rocky. It should roll into the hole and stop there; you should be able to walk across. If it rolls away by itself at the start or doesn't reach the hole, tell me.
 11. Bounce pads: go down to the bottom of the Area G shaft. You should be thrown zigzag pad to pad up to the floor on the right at the top. If a hop hits a wall, move that pad slightly or lower its **Arc Height**.
 12. Checkpoint: touch it, then die on a hazard. You should come back at the flag after 1 second.
+13. Launch: press far from the worm and drag. The arc and arrow should appear at the worm and follow your drag.
+14. Super bounce: tick it on one pad and check it reaches the next one without hitting a wall.
+15. Menu: click the button. The image should zoom in first, then the transition, then the level.

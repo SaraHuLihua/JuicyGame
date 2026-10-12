@@ -53,6 +53,17 @@ namespace ProjectJuice
         public Vector2 boundsMin = new Vector2(-50f, -50f);
         public Vector2 boundsMax = new Vector2(50f, 50f);
 
+        [Header("Shake (GameJuice and mechanisms)")]
+        [Tooltip("Multiplies every shake on this camera. 0 = never shakes.")]
+        [Min(0f)] public float shakeMultiplier = 1f;
+        [Tooltip("How fast a shake dies out (per second).")]
+        [Min(0.1f)] public float shakeDecay = 2.2f;
+
+        static float trauma; // 0..1-ish, shared so anything can shake the camera
+        Vector2 basePos;     // follow position without the shake offset
+        bool hasBase;
+        float shakeSeed;
+
         Camera cam;
         Vector2 aim;          // dead-zone filtered target point
         Vector2 velocity;     // SmoothDamp state
@@ -115,11 +126,29 @@ namespace ProjectJuice
             look = Vector2.SmoothDamp(look, wantLook, ref lookVel, 0.5f, Mathf.Infinity, dt);
 
             Vector2 goal = Clamp(aim + off + look);
-            Vector2 cur = transform.position;
+            Vector2 cur = hasBase ? basePos : (Vector2)transform.position;
             float nx = Mathf.SmoothDamp(cur.x, goal.x, ref velocity.x, 1f / followSpeed, Mathf.Infinity, dt);
             float ny = Mathf.SmoothDamp(cur.y, goal.y, ref velocity.y, 1f / verticalFollowSpeed, Mathf.Infinity, dt);
             Vector2 next = Clamp(new Vector2(nx, ny));
-            transform.position = new Vector3(next.x, next.y, transform.position.z);
+            basePos = next;
+            hasBase = true;
+            transform.position = new Vector3(next.x, next.y, transform.position.z) + (Vector3)ShakeOffset(dt);
+        }
+
+        /// <summary>Add a shake (amount = largest offset in world units). Shakes add up and fade out.</summary>
+        public static void AddShake(float amount)
+        {
+            trauma = Mathf.Min(trauma + Mathf.Max(0f, amount), 1.5f);
+        }
+
+        Vector2 ShakeOffset(float dt)
+        {
+            if (trauma <= 0.0001f || shakeMultiplier <= 0f) { trauma = 0f; return Vector2.zero; }
+            shakeSeed += dt * 28f;
+            float a = trauma * shakeMultiplier;
+            Vector2 o = new Vector2(Mathf.PerlinNoise(shakeSeed, 0.3f) - 0.5f, Mathf.PerlinNoise(0.7f, shakeSeed) - 0.5f) * 2f * a;
+            trauma = Mathf.MoveTowards(trauma, 0f, dt * shakeDecay * Mathf.Max(trauma, 0.15f));
+            return o;
         }
 
         static float DeadZone(float aim, float p, float half)
@@ -154,6 +183,9 @@ namespace ProjectJuice
             look = lookVel = velocity = Vector2.zero;
             zoomVel = 0f;
             Vector2 p = Clamp(aim + off);
+            basePos = p;
+            hasBase = true;
+            trauma = 0f;
             transform.position = new Vector3(p.x, p.y, transform.position.z);
         }
 

@@ -605,6 +605,7 @@ namespace ProjectJuice
                 breakEffect.effectScale = baseScale;
                 for (int i = 0; i < extraPoints.Count; i++) breakEffect.Play(extraPoints[i], dir);
             }
+            GameJuice.Shake(0.12f + 0.08f * breaks);
             if (Broke != null) Broke(at);
             onBreak.Invoke();
         }
