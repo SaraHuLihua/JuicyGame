@@ -6467,15 +6467,15 @@ PrefabInstance:
       objectReference: {fileID: 21300000, guid: bdf8f4e4d364741799cc90580a40a431, type: 3}
     - target: {fileID: 5905891098378683059, guid: db57398ddd7594c06a02eb103591222b, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.5518345
+      value: 1.6478931
       objectReference: {fileID: 0}
     - target: {fileID: 5905891098378683059, guid: db57398ddd7594c06a02eb103591222b, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.5518345
+      value: 1.6478931
       objectReference: {fileID: 0}
     - target: {fileID: 5905891098378683059, guid: db57398ddd7594c06a02eb103591222b, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.5518345
+      value: 1.6478931
       objectReference: {fileID: 0}
     - target: {fileID: 5905891098378683059, guid: db57398ddd7594c06a02eb103591222b, type: 3}
       propertyPath: m_LocalPosition.x
@@ -19141,7 +19141,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9100003, guid: d75291565282e4d449190ecbe808511b, type: 3}
       propertyPath: endEase
-      value: 1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9100003, guid: d75291565282e4d449190ecbe808511b, type: 3}
       propertyPath: maxTravel
@@ -19152,8 +19152,20 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9100003, guid: d75291565282e4d449190ecbe808511b, type: 3}
+      propertyPath: returnSpeed
+      value: 0.54
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100003, guid: d75291565282e4d449190ecbe808511b, type: 3}
+      propertyPath: returnAmount
+      value: 0.799
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100003, guid: d75291565282e4d449190ecbe808511b, type: 3}
+      propertyPath: returnStrength
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100003, guid: d75291565282e4d449190ecbe808511b, type: 3}
       propertyPath: playerWeightMultiplier
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 9100023, guid: d75291565282e4d449190ecbe808511b, type: 3}
       propertyPath: width
@@ -22378,12 +22390,28 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9100003, guid: d75291565282e4d449190ecbe808511b, type: 3}
+      propertyPath: endEase
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100003, guid: d75291565282e4d449190ecbe808511b, type: 3}
       propertyPath: maxTravel
-      value: 10.7
+      value: 16.22
       objectReference: {fileID: 0}
     - target: {fileID: 9100003, guid: d75291565282e4d449190ecbe808511b, type: 3}
       propertyPath: autoReturn
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100003, guid: d75291565282e4d449190ecbe808511b, type: 3}
+      propertyPath: returnSpeed
+      value: 0.54
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100003, guid: d75291565282e4d449190ecbe808511b, type: 3}
+      propertyPath: returnAmount
+      value: 0.71
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100003, guid: d75291565282e4d449190ecbe808511b, type: 3}
+      propertyPath: playerWeightMultiplier
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 9100023, guid: d75291565282e4d449190ecbe808511b, type: 3}
       propertyPath: width
