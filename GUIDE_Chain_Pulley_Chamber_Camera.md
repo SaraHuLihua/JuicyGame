@@ -7,6 +7,7 @@ All four systems reuse what was already in the project:
 |---|---|---|
 | Chain | `BreakableChain` (rewritten into a real link chain), `BreakableObject` (impact rule), `BreakEffect` (VFX), `Surface` | `ChainSounds` |
 | Pulley | `PulleySystem`, `PulleyPlatform`, `PulleyRope` (rewritten), worm mass from `WormPhysics` | — |
+| Belt drive | the pulley wheel art (`FG_Props_1_52/54/55`), `Surface`, the worm's carrier path (`ISurfaceCarrier`, like `CarrierChain`) | `BeltDrive` |
 | Rotating passage | the `FG_Props_1_1` object in `MechanicsTest`, `Surface`, worm physics | `RotatingChamber` |
 | Camera | `CameraFollow2D` (rewritten, same component) | `CameraZone` (optional) |
 
@@ -249,3 +250,45 @@ Same component, under **Follow**:
    - Stand on the pulley as Bouncy, then switch to Rocky.
 3. If a chain jitters, raise **Angular Damping** a little or lower **Link Count**. If it stretches when Rocky hits it, raise **Link Mass** slightly.
 4. Camera: try Orthographic Size 12–18 and keep what feels right.
+
+---
+
+## 7. Belt drive (wheels + belt, all turning)
+
+### Where it is
+- Prefab: **`Assets/Prefabs/Gameplay/BeltDrive.prefab`**: `BeltDrive (BeltDrive + Surface)` > `WheelSmall`, `WheelLarge`, `WheelMedium`, `Belt (LineRenderer + EdgeCollider2D)`.
+- Script: `Scripts/Gameplay/BeltDrive.cs`.
+- Art: the pulley wheels from **`FG_Props_1.png`**: `FG_Props_1_52` (small), `FG_Props_1_54` (medium), `FG_Props_1_55` (large). The belt is drawn by a LineRenderer, like the pulley rope.
+
+### How it works
+- The belt is a closed loop around the wheels. It is rebuilt from the wheels' positions and radii (straight runs on the real tangent lines, arcs around each wheel), also in Edit mode. Move a wheel in the Scene view and the belt and its collider follow.
+- By default the belt and every wheel turn **clockwise**. Each wheel spins at the speed that matches the belt at its rim, so the small wheel spins fastest and nothing looks like it slips.
+- The belt is solid (EdgeCollider2D, Metal surface). The worm can land on it and is **carried like a conveyor**: on the top run it moves in the belt's direction, and it inherits the belt's speed when it launches. Grip is the same rule as `CarrierChain` (Bouncy picks up speed faster, Rocky lags a little more when boarding). At the end of the top run the worm rides over the wheel and drops off.
+- Small light marks ("cleats") travel along the belt in Play mode so you can see it moving.
+
+### Workflow
+1. Drag `BeltDrive.prefab` into the scene.
+2. Move the root to place the whole machine. Move `WheelSmall` / `WheelMedium` / `WheelLarge` to change the shape.
+3. Set **Speed** and **Direction** on the root's `BeltDrive`.
+4. Press Play.
+
+Don't scale the root or the wheels with the Scale tool to resize a wheel: change its **Radius** in the `Pulleys` list and scale only the wheel sprite to match (the sprite scale is 2 × Radius ÷ sprite size in units: 2.00 for the small art, 3.48 for the medium, 4.83 for the large).
+
+### Inspector settings (`BeltDrive`)
+- **Pulleys**: the wheels, **in order around the loop** (either way round works). For each: **Wheel** (the transform), **Radius** (where the belt sits on the rim) and **Outside**.
+  - Outside off (default): the wheel is inside the loop and turns the same way as the belt.
+  - Outside on: an idler that presses on the belt from outside and turns the other way.
+  - Add a fourth wheel by duplicating one, then adding it to the list in the right spot.
+  - Wheels that overlap have no straight run between them, and the belt disappears until you move them apart.
+- **Direction** (Clockwise / CounterClockwise), **Speed** (units/s, also the rim speed of every wheel), **Running**, **Spin Up Time** (soft start and stop).
+- **Carries Player**: off makes the belt a plain solid surface. **Squishy Grip / Heavy Grip**: how quickly the worm is brought up to belt speed (keep Heavy above about 42 so it beats Metal friction).
+- **Thickness** (also the collision thickness), **Color**, **Belt Material** (optional tiling texture), **Sorting Order** (wheels are 5, belt 6, cleats 7), **Points Per Wheel**.
+- **Show Cleats / Cleat Spacing / Cleat Size / Cleat Color**.
+- For UnityEvents (buttons, triggers): `StartBelt()`, `StopBelt()`, `ToggleBelt()`, `ReverseDirection()`, `SetSpeed(float)`.
+- Select the object to see the gizmos: a cyan circle per wheel radius (orange for Outside idlers) and green arrows showing which way the belt runs.
+
+### First things to check in Play mode (not verified here)
+1. All three wheels and the belt turn clockwise, and the cleats move with the belt.
+2. Land on the top run as Bouncy and as Rocky: you should be carried right and dropped off past the large wheel. If Rocky doesn't move, raise **Heavy Grip**.
+3. If the belt sits a little off the wheel art, adjust that wheel's **Radius**.
+

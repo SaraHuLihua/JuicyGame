@@ -14,4 +14,14 @@ namespace ProjectJuice
         /// <summary>How fast (units/s^2) the worm is brought up to that velocity.</summary>
         float GetCarryAcceleration(WormMaterial material);
     }
+
+    /// <summary>
+    /// A carrier whose direction depends on where the worm touches it (a belt running around wheels).
+    /// WormPhysics passes the ground contact point.
+    /// </summary>
+    public interface IPointSurfaceCarrier : ISurfaceCarrier
+    {
+        /// <summary>World-space carry velocity at a world contact point.</summary>
+        Vector2 GetCarryVelocityAt(WormMaterial material, Vector2 worldPoint);
+    }
 }
