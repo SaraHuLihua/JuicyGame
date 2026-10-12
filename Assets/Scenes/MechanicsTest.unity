@@ -12839,6 +12839,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31cc5a55e815d4e5696c82671ef0695f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioManager
+  squishyMusic: {fileID: 8300000, guid: c2b5357136d6b440f9f0efb203841c9d, type: 3}
+  heavyMusic: {fileID: 8300000, guid: 86e9c0c943b9948c493a4c395b3e2771, type: 3}
+  formChangeDelay: 1.5
+  crossfadeDuration: 1
+  squishyVolume: 1
+  heavyVolume: 1
+  musicMixerGroup: {fileID: 0}
+  launchSfx: {fileID: 8300000, guid: e08278ab8f12d417d881aeeb3f150f26, type: 3}
+  launchSfxVolume: 0.8
+  squishyImpactSfx:
+  - {fileID: 8300000, guid: 3d825c2013a104b84885194346bed3ff, type: 3}
+  heavyImpactSfx:
+  - {fileID: 8300000, guid: d812ad80148d44f5e9c8bc06413b3da9, type: 3}
+  landingSfx: []
+  squishyDeathSfx:
+  - {fileID: 8300000, guid: 9f9a97ed9aeec43f0be1dc9b2af6581b, type: 3}
+  heavyDeathSfx:
+  - {fileID: 8300000, guid: 527868d06ec454af2a82040ccdb6bae8, type: 3}
+  deathSfx: []
+  respawnSfx: []
+  materialSwitchSfx: {fileID: 8300000, guid: 3e706ff3e8823401e9c2a90a58cd2327, type: 3}
+  rockDestructionSfx:
+  - {fileID: 8300000, guid: 1a3cf8aa85ead409eae968d3b6fe1fc4, type: 3}
 --- !u!1 &758773772
 GameObject:
   m_ObjectHideFlags: 0
@@ -15183,13 +15206,13 @@ MonoBehaviour:
   deathDelay: 0.9
   mainMenuScene: MainMenu
   completeTitle: Level complete!
-  jumpsText: 'Jumps: {0}'
+  jumpsText: 'Launches: {0}'
   bestText: 'Best: {0}'
   newBestText: New best!
   retryText: Retry
   menuText: Main Menu
   showJumpCounter: 1
-  counterText: '     Jumps {0}'
+  counterText: Launches {0}
   showControls: 1
   launchIcon: {fileID: 1820409507175287863, guid: 567514bef2cfa49429f9199f2fc49805, type: 3}
   heavyIcon: {fileID: 1221649175, guid: 567514bef2cfa49429f9199f2fc49805, type: 3}
@@ -15306,6 +15329,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 880000106}
+  - component: {fileID: 880000141}
   m_Layer: 0
   m_Name: Bumper Room
   m_TagString: Untagged
@@ -15333,6 +15357,27 @@ Transform:
   - {fileID: 880000124}
   m_Father: {fileID: 705904770}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &880000141
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 880000105}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 903fa6cbef2e46a6a23f174b4b99c57a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectJuice.BumperRoom
+  size: {x: 22, y: 18}
+  offset: {x: 0, y: -2}
+  duration: 4
+  bounceSpeed: 18
+  entryKick: 20
+  rearmAfter: 1
+  onSuperBounce:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &880000107
 GameObject:
   m_ObjectHideFlags: 0

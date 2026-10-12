@@ -8,18 +8,16 @@ namespace ProjectJuice
     ///
     /// Spam control: a hit must be faster than Min Impact Speed, the whole chain plays at most one
     /// sound per Min Interval and Max Per Second, and each link has its own cooldown. Volume follows
-    /// impact speed. Assign your own clips in the arrays; while they are empty a synthesised metal
-    /// clink is used so the chain is never silent.
+    /// impact speed. Assign your own clips in the arrays; while they are empty the chain is silent.
     /// </summary>
     [DisallowMultipleComponent]
     public class ChainSounds : MonoBehaviour
     {
-        [Header("Clips (empty = generated metal clink)")]
+        [Header("Clips (empty = silent)")]
         [Tooltip("Played when links hit walls, floors, the worm... One is picked at random.")]
         public AudioClip[] impactClips;
         [Tooltip("Played once when the chain snaps.")]
         public AudioClip[] breakClips;
-        public bool useGeneratedSoundsWhenEmpty = true;
 
         [Header("Volume")]
         [Range(0f, 1f)] public float impactVolume = 0.55f;
@@ -48,9 +46,6 @@ namespace ProjectJuice
         float windowStart;
         int windowCount;
         float[] linkLast = new float[0];
-
-        static AudioClip[] generatedClinks;
-        static AudioClip generatedSnap;
 
         void Awake()
         {
@@ -118,47 +113,8 @@ namespace ProjectJuice
 
         AudioClip Pick(AudioClip[] set, bool snap)
         {
-            if (set != null && set.Length > 0)
-            {
-                AudioClip c = set[Random.Range(0, set.Length)];
-                if (c != null) return c;
-            }
-            if (!useGeneratedSoundsWhenEmpty) return null;
-            if (snap)
-            {
-                if (generatedSnap == null) generatedSnap = Synth("ChainSnap", 0.45f, 0.6f, new[] { 610f, 1430f, 2390f, 3870f }, 0.18f, 0.35f);
-                return generatedSnap;
-            }
-            if (generatedClinks == null)
-                generatedClinks = new[]
-                {
-                    Synth("ChainClink0", 0.18f, 1f, new[] { 1870f, 3110f, 4790f, 7230f }, 0.05f, 0.05f),
-                    Synth("ChainClink1", 0.16f, 1f, new[] { 2140f, 3460f, 5310f, 6890f }, 0.045f, 0.05f),
-                    Synth("ChainClink2", 0.2f, 1f, new[] { 1650f, 2870f, 4420f, 7650f }, 0.06f, 0.05f),
-                };
-            return generatedClinks[Random.Range(0, generatedClinks.Length)];
-        }
-
-        /// <summary>Small inharmonic "metal" tone: a few decaying partials plus a noise click at the start.</summary>
-        static AudioClip Synth(string name, float seconds, float gain, float[] partials, float decay, float noise)
-        {
-            const int rate = 44100;
-            int n = Mathf.CeilToInt(seconds * rate);
-            float[] data = new float[n];
-            System.Random rng = new System.Random(name.GetHashCode());
-            for (int i = 0; i < n; i++)
-            {
-                float t = i / (float)rate;
-                float s = 0f;
-                for (int p = 0; p < partials.Length; p++)
-                    s += Mathf.Sin(2f * Mathf.PI * partials[p] * t) * Mathf.Exp(-t / (decay * (1f + 0.6f * (partials.Length - p)))) / (p + 1f);
-                float click = ((float)rng.NextDouble() * 2f - 1f) * noise * Mathf.Exp(-t / 0.004f);
-                float attack = Mathf.Clamp01(t / 0.0015f);
-                data[i] = Mathf.Clamp((s * 0.45f + click) * attack * gain, -1f, 1f);
-            }
-            AudioClip clip = AudioClip.Create(name, n, 1, rate, false);
-            clip.SetData(data, 0);
-            return clip;
+            if (set == null || set.Length == 0) return null;
+            return set[Random.Range(0, set.Length)];
         }
     }
 }

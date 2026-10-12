@@ -103,7 +103,6 @@ namespace ProjectJuice
             }
             if (GetComponent<BreakableChain>() == null) // chains play their own snap
             {
-                GameAudio.PlayAt("break", hit.point, Mathf.Clamp(0.55f + hit.impactForce / 120f, 0.55f, 1f));
                 GameJuice.Shake(0.12f);
             }
             if (Broken != null) Broken(hit);                     // physical reaction of composite objects first

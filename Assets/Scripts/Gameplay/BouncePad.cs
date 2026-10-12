@@ -139,7 +139,6 @@ namespace ProjectJuice
             wobbleTimer = 0f;
             wobbleBoost = superBounce ? 1.6f : 1f;
             if (audioSource != null) audioSource.PlayOneShot(bounceSound, bounceVolume);
-            else GameAudio.PlayAt("boing", transform.position, bounceVolume, superBounce ? 1.3f : 1f);
             onBounce.Invoke();
         }
 

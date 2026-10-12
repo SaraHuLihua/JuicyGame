@@ -626,7 +626,6 @@ namespace ProjectJuice
                 for (int i = 0; i < extraPoints.Count; i++) breakEffect.Play(extraPoints[i], dir);
             }
             GameJuice.Shake(0.12f + 0.08f * breaks);
-            GameAudio.PlayAt("chain_snap", at, 0.9f);
             if (Broke != null) Broke(at);
             onBreak.Invoke();
         }

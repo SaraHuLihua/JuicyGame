@@ -26,8 +26,8 @@ namespace ProjectJuice
         [Tooltip("Scene loaded by the Main Menu button (must be in File > Build Profiles).")]
         public string mainMenuScene = "MainMenu";
         public string completeTitle = "You did it!";
-        [Tooltip("{0} = number of jumps.")]
-        public string jumpsText = "Jumps: {0}";
+        [Tooltip("{0} = number of launches.")]
+        public string jumpsText = "Launches: {0}";
         [Tooltip("{0} = fewest jumps ever on this level (saved on this computer).")]
         public string bestText = "Best: {0}";
         public string newBestText = "New best!";
@@ -36,8 +36,8 @@ namespace ProjectJuice
 
         [Header("Jump counter (top left)")]
         public bool showJumpCounter = true;
-        [Tooltip("{0} = number of jumps.")]
-        public string counterText = "Jumps {0}";
+        [Tooltip("{0} = number of launches.")]
+        public string counterText = "Launches {0}";
 
         [Header("Controls tutorial (bottom left)")]
         [Tooltip("Shows the mouse = launch and Space = switch icons. The material you are NOT is darker; TutorialZones in the level make the icon you need pulse.")]

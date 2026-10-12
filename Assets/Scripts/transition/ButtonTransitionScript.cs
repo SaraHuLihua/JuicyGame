@@ -19,6 +19,8 @@ public class ButtonTransitionScript : MonoBehaviour
     public float zoomSkipStart = 0.9f;
     [Tooltip("Secondi di zoom prima che parta la transizione (lo zoom continua sotto la transizione).")]
     public float zoomBeforeTransition = 0.6f;
+    [Tooltip("Effetto 'entri nella macchina' durante lo zoom (ingranaggi, tunnel, vapore, suono). Vuoto = niente.")]
+    public ProjectJuice.MenuEnterJuice enterJuice;
 
     private bool buttonClicked = false;
 
@@ -31,6 +33,8 @@ public class ButtonTransitionScript : MonoBehaviour
 
     IEnumerator DelayedLoadScene(string sceneName)
     {
+        if (enterJuice != null) enterJuice.Play();
+
         // 1. Zoom in della camera/immagine appena si clicca
         if (zoomAnimator != null)
         {

@@ -1313,6 +1313,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1824091700}
   - component: {fileID: 1824091699}
+  - component: {fileID: 880100001}
   m_Layer: 5
   m_Name: LevelLoader
   m_TagString: Untagged
@@ -1339,6 +1340,27 @@ MonoBehaviour:
   zoomState: mainMenuZoomIn
   zoomSkipStart: 0.9
   zoomBeforeTransition: 0.6
+  enterJuice: {fileID: 880100001}
+--- !u!114 &880100001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1824091698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1aabe37db414bdc90f1f0fa06563775, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectJuice.MenuEnterJuice
+  duration: 2.6
+  sortingOrder: 8
+  chalk: {r: 1, g: 1, b: 1, a: 0.85}
+  vignetteStrength: 0.85
+  startClip: {fileID: 0}
+  startVolume: 0.9
+  rings: 7
+  dust: 40
 --- !u!224 &1824091700
 RectTransform:
   m_ObjectHideFlags: 0
