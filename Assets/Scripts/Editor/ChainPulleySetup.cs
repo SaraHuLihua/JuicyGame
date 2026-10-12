@@ -86,8 +86,9 @@ namespace ProjectJuice.EditorTools
             sr.sprite = square;
             sr.color = new Color(0.36f, 0.42f, 0.47f);
             sr.sortingOrder = 3;
+            go.transform.localScale = new Vector3(2.4f, 0.4f, 1f);
             BoxCollider2D col = go.AddComponent<BoxCollider2D>();
-            col.size = new Vector2(2.4f, 0.4f);
+            col.size = Vector2.one;
             PulleyPlatform p = go.AddComponent<PulleyPlatform>();
             p.surfaceType = SurfaceType.Metal;
             return p;

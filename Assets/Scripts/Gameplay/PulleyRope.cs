@@ -19,6 +19,7 @@ namespace ProjectJuice
         void Awake()
         {
             line = GetComponent<LineRenderer>();
+            if (line == null) line = gameObject.AddComponent<LineRenderer>();
             line.positionCount = 3;
             line.useWorldSpace = true;
             line.startWidth = width;
