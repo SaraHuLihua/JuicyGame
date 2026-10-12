@@ -102,7 +102,7 @@ namespace ProjectJuice
 
             float oldRadius = col.radius;
             rb.mass = profile.mass;
-            rb.gravityScale = profile.gravityScale * LevelSettings.GravityMultiplier(m);
+            rb.gravityScale = profile.gravityScale;
             col.radius = profile.radius;
             if (profile.radius > oldRadius && IsGrounded)
                 rb.position += Vector2.up * (profile.radius - oldRadius); // do not grow into the floor
@@ -185,7 +185,7 @@ namespace ProjectJuice
         public Vector2 PredictLaunchVelocity(Vector2 direction, float power01, float forceMultiplier)
         {
             EnsureInit();
-            float speed = Mathf.Lerp(profile.minLaunchSpeed, profile.maxLaunchSpeed, Mathf.Clamp01(power01)) * forceMultiplier * LevelSettings.LaunchMultiplier(Material);
+            float speed = Mathf.Lerp(profile.minLaunchSpeed, profile.maxLaunchSpeed, Mathf.Clamp01(power01)) * forceMultiplier;
             // Launching from a moving surface inherits its movement (chain, cilia).
             return direction.normalized * speed + rb.GetVelocity();
         }

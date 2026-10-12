@@ -8,7 +8,7 @@ namespace ProjectJuice
     /// The clips are the files in Assets/Resources/Audio (name = file name without extension). To change a sound,
     /// replace that file keeping its name, or drop a clip on the matching slot of a GameAudio component you add
     /// to the scene (that one is used instead of the auto-created one). Sources and licences: Assets/Resources/Audio/SOURCES.md.
-    /// It also plays the worm's landing sounds itself (soft for Squishy, a thud for Rocky, louder for harder hits).
+    /// It also plays the worm's landing sounds itself (soft for Squishy; for Rocky a metal clang on metal, a thud elsewhere; louder for harder hits).
     /// Every sound gets a little random pitch so repeats never sound mechanical.
     /// </summary>
     public class GameAudio : MonoBehaviour
@@ -98,7 +98,9 @@ namespace ProjectJuice
             lastLand = Time.time;
             bool heavy = subscribed.Material == WormMaterial.Heavy;
             float v = Mathf.Clamp01((hit.normalSpeed - landFromSpeed) / 25f);
-            Play(heavy ? "land_heavy" : "land_squishy", Mathf.Lerp(0.25f, heavy ? 0.85f : 0.7f, v), heavy ? Mathf.Lerp(1.05f, 0.9f, v) : Mathf.Lerp(1.1f, 0.95f, v));
+            string clip = "land_squishy";
+            if (heavy) clip = hit.surface == SurfaceType.Metal ? (Random.value < 0.5f ? "land_heavy_metal" : "land_heavy_metal2") : "land_heavy";
+            Play(clip, Mathf.Lerp(0.25f, heavy ? 0.85f : 0.7f, v), heavy ? Mathf.Lerp(1.05f, 0.9f, v) : Mathf.Lerp(1.1f, 0.95f, v));
         }
 
         // ------------------------------------------------------------------ API

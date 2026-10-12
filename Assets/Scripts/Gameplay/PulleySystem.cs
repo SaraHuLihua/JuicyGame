@@ -30,9 +30,9 @@ namespace ProjectJuice
         [Tooltip("How far each platform can move from its start position, up or down.")]
         public float maxTravel = 3f;
         [Tooltip("Platform speed per unit of load difference. Heavy-vs-empty ≈ 2.5x Bouncy-vs-empty.")]
-        public float moveSpeed = 4.5f;
+        public float moveSpeed = 2f;
         [Tooltip("Hard cap on platform speed so Heavy can never break the level.")]
-        public float maxSpeed = 10f;
+        public float maxSpeed = 6f;
         [Tooltip("How fast velocity chases the target (higher = snappier, lower = floatier).")]
         public float damping = 4f;
         [Tooltip("Distance before each travel limit over which the platforms ease to a stop instead of halting dead (units). 0 = hard stop.")]
@@ -67,7 +67,7 @@ namespace ProjectJuice
         [Tooltip("Speed (units/s) a platform must have when it reaches the end of its travel to clunk (shake, dust, sound).")]
         public float clunkFromSpeed = 1.5f;
         [Tooltip("Bounce back at the end of the travel: share of the speed sent back (0 = stops dead).")]
-        [Range(0f, 0.6f)] public float endBounce = 0.25f;
+        [Range(0f, 0.6f)] public float endBounce = 0f;
         [Tooltip("Camera shake of the clunk at full speed (units).")]
         public float clunkShake = 0.12f;
 
@@ -81,6 +81,7 @@ namespace ProjectJuice
         float wheelBaseAngle;
         WormController subscribedWorm;
         float lastCreak = -99f;
+        float lastLandingKick = -99f;
         float peakSpeed;
         float prevSpeed;
         bool wasAtEnd;
@@ -136,6 +137,10 @@ namespace ProjectJuice
             if (landingKick <= 0f || hit.collider == null || hit.normal.y < 0.5f) return; // landings only
             PulleyPlatform p = hit.collider.GetComponentInParent<PulleyPlatform>();
             if (p == null || (p != platformA && p != platformB)) return;
+            // Only a real landing counts: not the small re-contacts of a worm already riding a moving platform
+            // (kicking on those pushed the platform away again and again, so it shook and the worm could not launch).
+            if ((p.HasRider && Time.time - p.RiderSince > 0.15f) || Time.time - lastLandingKick < 0.4f || hit.normalSpeed < 3f) return;
+            lastLandingKick = Time.time;
             float total = Mathf.Max(0.1f, platformA.baseWeight + platformB.baseWeight + Mathf.Abs(counterBias));
             float kick = hit.impactForce * landingKick / total;
             velocity += p == platformA ? kick : -kick; // A pushed down = positive travel

@@ -16,16 +16,6 @@ namespace ProjectJuice
     {
         public static LevelSettings Current { get; private set; }
 
-        [Header("Launch tuning for this level")]
-        [Tooltip("Multiplies Squishy's launch speed (min and max). 1.1 = 10% stronger shots.")]
-        [Min(0.1f)] public float squishyLaunch = 1f;
-        [Tooltip("Multiplies Rocky's launch speed (min and max).")]
-        [Min(0.1f)] public float heavyLaunch = 1f;
-        [Tooltip("Multiplies Squishy's gravity. Higher = faster, snappier hops (raise the launch too, or it reaches less far).")]
-        [Min(0.1f)] public float squishyGravity = 1f;
-        [Tooltip("Multiplies Rocky's gravity.")]
-        [Min(0.1f)] public float heavyGravity = 1f;
-
         [Header("Death")]
         [Tooltip("On = dying without a checkpoint restarts the level from the start (broken things, chains and the jump counter too). Off = back to the last landing.")]
         public bool restartLevelOnDeath = true;
@@ -49,6 +39,24 @@ namespace ProjectJuice
         [Tooltip("{0} = number of jumps.")]
         public string counterText = "Jumps {0}";
 
+        [Header("Controls tutorial (bottom left)")]
+        [Tooltip("Shows the mouse = launch and Space = switch icons. The material you are NOT is darker; TutorialZones in the level make the icon you need pulse.")]
+        public bool showControls = true;
+        [Tooltip("Launch circle (Untitled_Artwork 13 'butto').")]
+        public Sprite launchIcon;
+        [Tooltip("Rocky circle (Untitled_Artwork 13_1).")]
+        public Sprite heavyIcon;
+        [Tooltip("Squishy circle (Untitled_Artwork 13_2).")]
+        public Sprite squishyIcon;
+        [Tooltip("Mouse (Untitled_Artwork 13_6).")]
+        public Sprite mouseIcon;
+        [Tooltip("The three click lines around the mouse (Untitled_Artwork 13_3, _4, _5), shown while aiming.")]
+        public Sprite[] clickLines;
+        [Tooltip("Space bar (Untitled_Artwork 13_7).")]
+        public Sprite spaceIcon;
+        [Tooltip("Size of the icons (1 = as drawn).")]
+        [Range(0.3f, 2f)] public float controlsScale = 0.8f;
+
         [Header("Fonts (empty = TextMeshPro default)")]
         [Tooltip("Big title (DarumadropOne-Regular SDF, like the main menu title).")]
         public TMPro.TMP_FontAsset titleFont;
@@ -63,20 +71,6 @@ namespace ProjectJuice
         void OnDestroy()
         {
             if (Current == this) Current = null;
-        }
-
-        public static float LaunchMultiplier(WormMaterial m)
-        {
-            LevelSettings s = Current;
-            if (s == null) return 1f;
-            return m == WormMaterial.Squishy ? s.squishyLaunch : s.heavyLaunch;
-        }
-
-        public static float GravityMultiplier(WormMaterial m)
-        {
-            LevelSettings s = Current;
-            if (s == null) return 1f;
-            return m == WormMaterial.Squishy ? s.squishyGravity : s.heavyGravity;
         }
     }
 }

@@ -12,7 +12,8 @@ namespace ProjectJuice
     ///  - the jump counter, top left, which pops at every launch;
     ///  - a fade to black and back when the level restarts (a death without checkpoint, or Retry);
     ///  - the "You did it!" screen when the worm reaches a LevelFinish: title, the jumps counted up one by one,
-    ///    the best score for this level, and the Retry / Main Menu buttons.
+    ///    the best score for this level, and the Retry / Main Menu buttons (filled chalk boxes that float and push down);
+    ///  - the controls in the bottom-left corner (see ControlsHud).
     /// Texts, fonts and scene names come from the scene's LevelSettings. Creates itself next to the worm.
     /// </summary>
     public class LevelFlow : MonoBehaviour
@@ -179,6 +180,7 @@ namespace ProjectJuice
             LevelSettings s = LevelSettings.Current;
             EnsureEventSystem();
             if (counter != null) counter.gameObject.SetActive(false);
+            ControlsHud.SetVisible(false);
 
             RectTransform panel = Rect("Result", canvas.transform);
             Stretch(panel);
@@ -191,8 +193,8 @@ namespace ProjectJuice
             Place(count.rectTransform, new Vector2(0f, 10f), new Vector2(1200f, 140f));
             TextMeshProUGUI bestLine = Text("Best", panel, "", BodyFont(), 56f, new Color(1f, 1f, 1f, 0.75f));
             Place(bestLine.rectTransform, new Vector2(0f, -85f), new Vector2(1200f, 90f));
-            RectTransform retry = MakeButton(panel, s != null ? s.retryText : "Retry", new Vector2(-300f, -250f), () => { GameAudio.Play("ui_click"); RestartLevel(); });
-            RectTransform menu = MakeButton(panel, s != null ? s.menuText : "Main Menu", new Vector2(300f, -250f), () => { GameAudio.Play("ui_click"); GoToMainMenu(); });
+            RectTransform retry = MakeButton(panel, s != null ? s.retryText : "Retry", new Vector2(-280f, -260f), new Color(1f, 0.655f, 0.875f, 1f), () => { GameAudio.Play("ui_click"); RestartLevel(); });
+            RectTransform menu = MakeButton(panel, s != null ? s.menuText : "Main Menu", new Vector2(280f, -260f), new Color(0.663f, 0.647f, 1f, 1f), () => { GameAudio.Play("ui_click"); GoToMainMenu(); });
             title.rectTransform.localScale = Vector3.zero;
             count.alpha = 0f;
             bestLine.alpha = 0f;
@@ -294,6 +296,8 @@ namespace ProjectJuice
                 OnCounterChanged(0);
             }
 
+            ControlsHud.Build(canvas.transform, s);
+
             RectTransform f = Rect("Fade", canvas.transform);
             Stretch(f);
             fade = f.gameObject.AddComponent<Image>();
@@ -301,28 +305,84 @@ namespace ProjectJuice
             fade.raycastTarget = false;
         }
 
-        RectTransform MakeButton(RectTransform parent, string label, Vector2 pos, UnityEngine.Events.UnityAction onClick)
+        int buttonCount;
+
+        RectTransform MakeButton(RectTransform parent, string label, Vector2 pos, Color accent, UnityEngine.Events.UnityAction onClick)
         {
+            Vector2 size = new Vector2(440f, 130f);
+            const float depth = 16f;
             RectTransform r = Rect(label, parent);
-            Place(r, pos, new Vector2(460f, 130f));
+            Place(r, pos, size + new Vector2(0f, depth));
             Image hit = r.gameObject.AddComponent<Image>();
             hit.color = new Color(1f, 1f, 1f, 0f); // invisible, only catches the clicks
             Button b = r.gameObject.AddComponent<Button>();
             b.transition = Selectable.Transition.None;
             b.onClick.AddListener(onClick);
-            r.gameObject.AddComponent<UIButtonJuice>();
 
-            TextMeshProUGUI t = Text("Label", r, label, BodyFont(), 76f, Color.white);
+            RectTransform body = Rect("Body", r);
+            Place(body, Vector2.zero, size + new Vector2(0f, depth));
+            // The coloured base the face is pushed onto, then the filled chalk box with the text.
+            RectTransform bas = Rect("Base", body);
+            Place(bas, new Vector2(0f, -depth * 0.5f), size);
+            Image bi = bas.gameObject.AddComponent<Image>();
+            bi.sprite = ChalkBox();
+            bi.type = Image.Type.Sliced;
+            bi.color = new Color(accent.r * 0.6f, accent.g * 0.6f, accent.b * 0.6f, 1f);
+            bi.raycastTarget = false;
+            RectTransform face = Rect("Face", body);
+            Place(face, new Vector2(0f, depth * 0.5f), size);
+            Image fi = face.gameObject.AddComponent<Image>();
+            fi.sprite = ChalkBox();
+            fi.type = Image.Type.Sliced;
+            fi.raycastTarget = false;
+
+            TextMeshProUGUI t = Text("Label", face, label, BodyFont(), 72f, new Color(0.08f, 0.08f, 0.1f, 1f));
             Stretch(t.rectTransform);
-            RectTransform line = Rect("Chalk Line", r);
-            line.anchorMin = new Vector2(0.15f, 0f);
-            line.anchorMax = new Vector2(0.85f, 0f);
-            line.sizeDelta = new Vector2(0f, 6f);
-            line.anchoredPosition = new Vector2(0f, 14f);
-            Image li = line.gameObject.AddComponent<Image>();
-            li.color = new Color(1f, 1f, 1f, 0.8f);
-            li.raycastTarget = false;
+
+            UIButtonJuice j = r.gameObject.AddComponent<UIButtonJuice>();
+            j.body = body;
+            j.face = face;
+            j.faceImage = fi;
+            j.faceColor = new Color(0.96f, 0.95f, 0.93f, 1f);
+            j.hoverColor = Color.Lerp(Color.white, accent, 0.55f);
+            j.depth = depth;
+            j.phase = buttonCount++ * 1.9f;
+            fi.color = j.faceColor;
             return r;
+        }
+
+        static Sprite chalkBox;
+
+        /// <summary>A filled rounded box with a slightly rough, chalky edge and grain (made once, 9-sliced).</summary>
+        static Sprite ChalkBox()
+        {
+            if (chalkBox != null) return chalkBox;
+            const int n = 128;
+            const float radius = 40f;
+            Texture2D tex = new Texture2D(n, n, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Bilinear;
+            tex.wrapMode = TextureWrapMode.Clamp;
+            Color[] px = new Color[n * n];
+            System.Random rnd = new System.Random(13);
+            for (int y = 0; y < n; y++)
+            {
+                for (int x = 0; x < n; x++)
+                {
+                    // distance outside the rounded rectangle (negative = inside)
+                    float qx = Mathf.Max(Mathf.Abs(x + 0.5f - n * 0.5f) - (n * 0.5f - radius - 3f), 0f);
+                    float qy = Mathf.Max(Mathf.Abs(y + 0.5f - n * 0.5f) - (n * 0.5f - radius - 3f), 0f);
+                    float d = Mathf.Sqrt(qx * qx + qy * qy) - radius;
+                    float rough = Mathf.PerlinNoise(x * 0.21f, y * 0.21f) * 2.2f;          // chalky, uneven edge
+                    float a = Mathf.Clamp01(0.5f - (d + rough) / 1.6f);
+                    float grain = 0.9f + 0.1f * (float)rnd.NextDouble();                    // chalk grain
+                    if (d > -5f) grain *= 0.94f + 0.06f * Mathf.PerlinNoise(x * 0.6f, y * 0.6f); // denser rim
+                    px[y * n + x] = new Color(grain, grain, grain, a);
+                }
+            }
+            tex.SetPixels(px);
+            tex.Apply();
+            chalkBox = Sprite.Create(tex, new Rect(0f, 0f, n, n), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, new Vector4(48f, 48f, 48f, 48f));
+            return chalkBox;
         }
 
         static RectTransform Rect(string name, Transform parent)
