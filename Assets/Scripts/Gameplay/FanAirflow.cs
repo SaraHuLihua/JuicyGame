@@ -46,6 +46,14 @@ namespace ProjectJuice
         [Tooltip("Seconds from off to full strength (and back). 0 = instant.")]
         public float spinUpTime = 0.5f;
 
+        [Header("Launching while floating")]
+        [Tooltip("On = a worm floating in the air can aim and launch as if it stood on the ground.")]
+        public bool allowLaunchWhileFloating = true;
+        [Tooltip("It counts as floating once its speed stays under this (units/s)...")]
+        public float floatMaxSpeed = 4f;
+        [Tooltip("...for this many seconds. Stops a worm that was just launched up the column from launching again at once.")]
+        public float floatSettleTime = 0.2f;
+
         [Header("Air VFX (visual only)")]
         public bool showAir = true;
         [Tooltip("Number of air streaks rising from the grille.")]
@@ -77,6 +85,7 @@ namespace ProjectJuice
         bool wasRunning;
         Vector3 shakeBase;
         Transform airRoot;
+        float floatTimer;
 
         class Streak { public Transform t; public SpriteRenderer sr; public float x, y, speed, length, width, phase; }
         readonly List<Streak> streaks = new List<Streak>();
@@ -109,14 +118,19 @@ namespace ProjectJuice
                 wasRunning = running;
                 if (running) onStarted.Invoke(); else onStopped.Invoke();
             }
-            if (strength <= 0.0001f) return;
+            if (strength <= 0.0001f) { floatTimer = 0f; return; }
 
             WormController w = WormController.Instance;
             if (w == null || w.IsDead || w.Physics == null) return;
             Rigidbody2D rb = w.Physics.Body;
 
             float h01, side;
-            if (!InColumn(rb.position, w.Physics.Collider.radius * Mathf.Abs(w.transform.lossyScale.x), out h01, out side)) return;
+            if (!InColumn(rb.position, w.Physics.Collider.radius * Mathf.Abs(w.transform.lossyScale.x), out h01, out side)) { floatTimer = 0f; return; }
+
+            // Floating = slow inside the air for a moment: then the worm may aim and launch from mid-air.
+            if (allowLaunchWhileFloating && strength > 0.5f && rb.GetVelocity().magnitude <= floatMaxSpeed) floatTimer += dt;
+            else floatTimer = 0f;
+            if (floatTimer >= floatSettleTime) w.Physics.AllowLaunchInAir();
 
             Vector2 up = transform.up;
             Vector2 right = transform.right;

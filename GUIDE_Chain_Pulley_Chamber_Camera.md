@@ -11,7 +11,8 @@ All four systems reuse what was already in the project:
 | Rotating passage | the `FG_Props_1_1` object in `MechanicsTest`, `Surface`, worm physics | `RotatingChamber` |
 | Camera | `CameraFollow2D` (rewritten, same component) | `CameraZone` (optional) |
 | Fan | the `Fan` object in `MechanicsTest` (`FG_Props_1_10` grille, `FG_Props_1_41` body), worm mass from `WormPhysics` | `FanAirflow`, `Fan.prefab` |
-| Stepping gear | `FG_Props_1_45` in `MechanicsTest` (its own PolygonCollider2D) | `GearStepper` |
+| Stepping gear | `FG_Props_1_45` in `MechanicsTest` (its own PolygonCollider2D), `WormController.Die` (like `Hazard`) | `GearStepper` |
+| Trampoline | the `Trampoline` object in `MechanicsTest` (`FG_Props_1_3` head, `FG_Props_1_42` rod, `FG_Props_1_41` base), the worm's aim (`WormLauncher`) | `Trampoline`, `Trampoline.prefab` |
 
 > Written without access to the Unity editor. The C# compiles against the Unity API, the prefab and
 > scene YAML was written by hand, and nothing has been tested in Play mode yet. The checklist at the end
@@ -72,7 +73,8 @@ Without a Bottom Anchor the old behaviour stays: the far end is pinned where the
 - **Break At Link**: the joint above this link breaks. With 12 links, 6 breaks in the middle, 1 just under the top link and 11 above the last link.
 - **Breakable** off gives an unbreakable chain.
 - What breaks it:
-  0. **Standing on it heavy** (new): **Break Under Mass** (1.5) on `BreakableChain`. When the worm stands on the chain for **Break Under Mass Delay** (0.25 s) and its mass is at least this value, the chain snaps. Rocky weighs 2.5, so it breaks the chain; Bouncy weighs 0.3, so it can walk on it. Set it to 0 to turn this off. Before this, only a *hit* could break the chain, so switching to Rocky while standing on it did nothing.
+  0. **Standing on it heavy**: **Break Under Mass** (1.5) on `BreakableChain`. When the worm stands on the chain for **Break Under Mass Delay** (0.25 s) and its mass is at least this value, the chain snaps. Rocky weighs 2.5, so it breaks the chain; Bouncy weighs 0.3, so it can walk on it.
+     **Break Under Mass is also the lightest worm whose hits count** (it sets `BreakableObject` > **Minimum Mass**). Before, Bouncy could break chains too: its fast hits (up to 0.3 × 31 = 9) are above half the threshold, so they "cracked" the chain, and two or three cracks add up to a break. Now Bouncy's hits never crack or break it. Set it to 0 to go back to "any hit hard enough".
   1. **Worm impact**, through the project's existing `BreakableObject` on the Chain object, with the same rule as brittle seals: impact force = worm mass × speed into the chain. **Break Threshold** is 15 by default, which Rocky reaches easily (15–65) and Bouncy practically never (2–9). **Crack Fraction / Accumulate Damage** work as usual, so two medium hits can snap it. A hit anywhere on the chain counts. With **Break Where Hit** on (default) it snaps at the link that was hit or stood on; off, it always snaps at Break At Link.
   2. **Joint Break Force** on `BreakableChain`: the break joint also snaps on its own when overloaded. Infinity (the default) turns this off. It's hard to tune because the chain's own weight already pulls on that joint (a lot on a long, tight chain), so use Break Under Mass for "Rocky is too heavy for it".
   3. **Code or UnityEvents**: call `BreakableChain.Break()`, for example from a button, a trigger or another object's `onBroken`.
@@ -89,6 +91,13 @@ On `BreakableChain` > **Physics**:
 - **Link Layer**: the physics layer of the links (-1 uses the Chain object's layer). Links collide with whatever that layer collides with in *Project Settings > Physics 2D > Layer Collision Matrix*. Everything in the project is currently on `Default`, so chains hit all level geometry.
 - **Collider Matches Art** (new, on by default): the collision thickness follows the drawn rings (Art Scale included), times **Art Collider Fill** (0.85). This fixes the worm **floating** above the chain. In `MechanicsTest` the chain had Link Width 1.02 and Scale 4.48, so each link was 4.6 units thick while the rings are drawn about 1.8 units tall, and the worm rested on an invisible capsule well above the art. Lower Art Collider Fill if the worm still looks a little high, raise it if it sinks into the rings.
 - **Link Width**: collision thickness, used only when Collider Matches Art is off or the chain has no art.
+
+### Many chains without lag (Header *Performance*)
+Every link is a Rigidbody2D with a joint. The `Chain` in `MechanicsTest` has Link Count 28 and Scale 4.48, and the Y scale multiplies the link count, so it builds **125 links**. Six or seven copies make about 800 bodies swinging at 120 physics steps per second, which is why duplicating it lagged. The fixes:
+- **Sleep When Still** (on): once a chain has stopped moving for **Sleep After** (1 s), with every link slower than **Sleep Speed**, the whole chain goes to sleep and costs almost nothing. It wakes up by itself when the worm (or anything moving) touches it, and goes back to sleep when it's still again. You can unhide all your chains.
+- **Continuous Collision** (off): continuous collision on every link was the most expensive part. Now only the part that falls after a break switches to continuous collision, so it still can't fall through floors.
+- Links now ignore only the neighbours their capsules can actually reach, instead of every pair. That was 7,750 calls per chain when the level loaded.
+- If a chain builds more than 60 links, the Console says so. The simplest extra saving is fewer links: for the same length, use a smaller **Link Count** (Count × Scale Y is what gets built).
 
 ### Changing the look
 - **Ring Sprites / Bar Sprites**: swap or add variants. Leave Bar Sprites empty to get rings on every link.
@@ -333,6 +342,9 @@ Don't scale the root or the wheels with the Scale tool to resize a wheel: change
 - Visuals (never touch physics): soft air streaks rise from the grille, wave and fade out at the top, and the housing vibrates a little while the fan runs.
 - Select the Fan to see the column (cyan box) and **the height where Bouncy will float (green line)**.
 
+### Launching while floating
+**Allow Launch While Floating** (on): once the worm floats (slower than **Float Max Speed**, 4 u/s, for **Float Settle Time**, 0.2 s) it can aim and launch as if it stood on the ground. The launch starts from its floating speed. Right after a launch it has to slow down and float again before it can launch once more, so it can't climb forever by chaining jumps. Floating isn't a landing: the respawn point doesn't move.
+
 ### Inspector settings (`FanAirflow`)
 - **Air column**: **Outlet Center** (middle of the grille, local), **Column Width**, **Column Height**. The air blows along the object's local up, so rotating the Fan makes a sideways fan.
 - **Lift**:
@@ -360,9 +372,30 @@ It turns **clockwise in clicks**: a quick turn of one tooth, a small overshoot t
 - **Overshoot** (0.08) / **Settle Time** (0.1 s): the clunk. 0 gives a dry, exact stop.
 - **Start Automatically**, **Start Delay**, and `StartTurning()`, `StopTurning()`, `ToggleTurning()` for UnityEvents.
 - **Click Sound** / **Click Volume** (optional), and **On Step**, fired on every click (sound, particles, or to drive another mechanism).
+- **Crushing**: **Crushes Player** (on). While the gear turns, a worm squeezed between the gear and anything else (wall, floor, another mechanism) dies, the same death as touching a `Hazard`. **Crush Opposition** (0.4) sets how face to face the two pushes must be: 1 = exactly opposite, lower catches more angled squeezes. **Crush Time** (0.04 s) ignores a tooth just brushing past. **On Crushed Player** is an event, for a sound for example. Just resting in a gap between two teeth, or being pushed along the floor, doesn't kill.
 
-## 10. First things to check in Play mode (fan, gear, chain, pulley; not verified here)
+## 10. Trampoline (spring piston)
+
+### Where it is
+- Prefab: **`Assets/Prefabs/Gameplay/Trampoline.prefab`**: `Trampoline (Trampoline)` > `FG_Props_1_41` (base) and `FG_Props_1_3` (head) > `FG_Props_1_42` (rod, moves with the head).
+- The `Trampoline` object in `MechanicsTest` (`Area_D tubi` > `tubo2`) is now an instance of this prefab, in the same place.
+- Script: `Scripts/Gameplay/Trampoline.cs`.
+
+### How it works
+1. Land or stand on the head as **Rocky**. Its mass (2.5) is at least **Trigger Mass** (1.5), so the head sinks (**Compress Depth**, **Compress Time**) and shakes a little. Bouncy (0.3) just stands on it.
+2. **Charge Time** (1 s) after it was set off, it springs up and throws the worm at **Launch Speed** (32 u/s, the same whatever the material: about 8 units high for Rocky).
+3. **During that second you can still choose the trajectory**: aim as usual (click and drag) and **keep holding**. When it fires, you go the way you're aiming, kept within **Max Steer Angle** (60°) of straight up. If you don't aim, you go straight up. If you let go of the drag before it fires, that's a normal launch and the trampoline fires empty.
+4. **Aim Power Sets Speed** (off): on, the drag length also sets the throw speed, from **Min Power Share** to 100%.
+- **Fire Time / Fire Overshoot / Return Time / Cooldown** control the spring's movement after the throw. **Charge Shake** is the tell while it's charged.
+- **On Charge**, **On Fire**: events for sounds or effects. `Trigger()` sets it off from another script or a UnityEvent.
+- Select it to see the throw direction (orange) and the steering limits.
+
+## 11. First things to check in Play mode (fan, gear, chain, pulley, trampoline; not verified here)
 1. Fan: walk into the air as Bouncy. You should rise and float near the green line. As Rocky you should stay on the ground. If Bouncy floats too high or too low, change **Lift Force**. If the air streaks are too strong or too faint, change the **Air Color** alpha.
 2. Gear: it clicks clockwise one tooth at a time. If a click looks like more or less than one tooth, adjust **Step Angle**.
 3. Chain: the worm should sit on the rings, not above them. Stand on it as Rocky and it should snap after about a quarter of a second. Bouncy should not break it.
 4. Pulley: sink a platform, then jump as Bouncy. With **Return Speed** 12–15 it should get back during the jump.
+5. Fan: float as Bouncy, then click and drag. You should be able to launch from mid-air.
+6. Gear: let a tooth push you against the wall on the right (as in the screenshot). You should die. Standing in a gap between teeth should not kill you.
+7. Chains: unhide all of them. The game should stay smooth; the chains still react when you hit them. Bouncy should never break them, Rocky should.
+8. Trampoline: land as Rocky, aim left or right while it's charged, and keep holding. You should be thrown that way after 1 second.

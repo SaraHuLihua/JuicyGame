@@ -91,13 +91,24 @@ namespace ProjectJuice
         [Tooltip("Physics layer for the links (-1 = same as this object). Links collide with whatever this layer collides with in Physics 2D settings.")]
         public int linkLayer = -1;
 
+        [Header("Performance")]
+        [Tooltip("Let the chain fall asleep once it has stopped moving: a sleeping chain costs almost nothing and wakes up by itself when the worm touches it. Keep it on when you use many chains.")]
+        public bool sleepWhenStill = true;
+        [Tooltip("Seconds without being touched, and with every link slower than Sleep Speed, before it sleeps.")]
+        [Min(0.1f)] public float sleepAfter = 1f;
+        [Tooltip("Links slower than this (units/s) count as still.")]
+        public float sleepSpeed = 0.4f;
+        [Tooltip("Continuous collision on every link (expensive with many links). Off = only the falling part after a break uses it.")]
+        public bool continuousCollision = false;
+
         [Header("Break point")]
         public bool breakable = true;
         [Tooltip("The joint ABOVE this link breaks (1 = just under the top link, Link Count - 1 = above the last link).")]
         [Min(1)] public int breakAtLink = 6;
         [Tooltip("The break joint also snaps on its own above this force (Infinity = only impacts / Break()). Hard to tune: the chain's own weight already pulls on it.")]
         public float jointBreakForce = Mathf.Infinity;
-        [Tooltip("Snaps when a worm at least this heavy stands on it (worm mass: Heavy 2.5, Squishy 0.3). 0 = off.")]
+        [Tooltip("Lightest worm that can break the chain, by standing on it OR by hitting it (worm mass: Heavy 2.5, Squishy 0.3). " +
+                 "Squishy's hits then never crack it, however fast. 0 = off: standing never breaks it and any hit hard enough does.")]
         [Min(0f)] public float breakUnderMass = 1.5f;
         [Tooltip("Seconds the heavy worm must stand on the chain before it snaps.")]
         [Min(0f)] public float breakUnderMassDelay = 0.25f;
@@ -126,6 +137,9 @@ namespace ProjectJuice
         HingeJoint2D breakJoint;
         int breakIndex;
         float weightTimer;
+        float lastDisturbed;
+        float nextSleepCheck;
+        bool sleeping;
         BreakableObject breakableObject;
         bool built;
         int builtCount;
@@ -235,7 +249,7 @@ namespace ProjectJuice
                 rb.gravityScale = gravityScale;
                 SetDamping(rb, linearDamping, angularDamping);
                 rb.interpolation = RigidbodyInterpolation2D.Interpolate;
-                rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+                rb.collisionDetectionMode = continuousCollision ? CollisionDetectionMode2D.Continuous : CollisionDetectionMode2D.Discrete;
 
                 CapsuleCollider2D col = go.AddComponent<CapsuleCollider2D>();
                 col.direction = CapsuleDirection2D.Vertical;
@@ -286,9 +300,18 @@ namespace ProjectJuice
             if (top == EndMode.PinnedInPlace) MakeWallPlate(transform, topWorld, HideFlags.None);
 
             if (!selfCollision)
+            {
+                // Only links whose capsules can reach each other need ignoring (neighbours overlap by design).
+                // All pairs would be Link Count squared calls: 7750 for a 125-link chain, a hitch on load.
+                int reach = Mathf.CeilToInt((builtLinkLength + builtWidth) / Mathf.Max(0.01f, builtLinkLength)) + 1;
                 for (int a = 0; a < cols.Count; a++)
-                    for (int b = a + 1; b < cols.Count; b++)
+                    for (int b = a + 1; b < cols.Count && b <= a + reach; b++)
                         Physics2D.IgnoreCollision(cols[a], cols[b], true);
+            }
+            if (builtCount > 60)
+                Debug.LogWarning("[BreakableChain] " + name + " builds " + builtCount + " physics links (Link Count x Transform Scale Y). " +
+                                 "Every link is a Rigidbody2D: lower Link Count (or the Y scale) if several chains make the game slow.", this);
+            lastDisturbed = Time.time;
 
             breakIndex = ClampedBreakIndex(builtCount);
             if (breakable && builtCount >= 2)
@@ -305,6 +328,8 @@ namespace ProjectJuice
 
             // Impact-based breaking goes through the project's BreakableObject (same rule as brittles).
             breakableObject = GetComponent<BreakableObject>();
+            if (breakableObject != null && breakUnderMass > 0f)
+                breakableObject.minimumMass = Mathf.Max(breakableObject.minimumMass, breakUnderMass); // Squishy's hits never crack it
             if (breakableObject != null && !breakable)
             {
                 Destroy(breakableObject); // unbreakable chain: impacts must not count as breaks at all
@@ -428,16 +453,49 @@ namespace ProjectJuice
 
         void FixedUpdate()
         {
-            if (!Application.isPlaying || !built || IsBroken || !breakable || breakUnderMass <= 0f) return;
-            // Weight rule: the worm's REAL mass against a threshold (no "if Heavy"), like every breakable.
+            if (!Application.isPlaying || !built) return;
+            // Is the worm standing on one of our links?
             WormController w = WormController.Instance;
             ChainLinkListener l = null;
-            if (w != null && !w.IsDead && w.Physics != null && w.Physics.Mass >= breakUnderMass
-                && w.Physics.Ground != null && w.Physics.Ground.HasSupport && w.Physics.Ground.Collider != null)
+            if (w != null && !w.IsDead && w.Physics != null && w.Physics.Ground != null
+                && w.Physics.Ground.HasSupport && w.Physics.Ground.Collider != null)
                 l = w.Physics.Ground.Collider.GetComponent<ChainLinkListener>();
-            if (l == null || l.chain != this) { weightTimer = 0f; return; }
+            bool standing = l != null && l.chain == this;
+            if (standing) Disturb();
+            UpdateSleep();
+
+            // Weight rule: the worm's REAL mass against a threshold (no "if Heavy"), like every breakable.
+            if (IsBroken || !breakable || breakUnderMass <= 0f || !standing || w.Physics.Mass < breakUnderMass) { weightTimer = 0f; return; }
             weightTimer += Time.fixedDeltaTime;
             if (weightTimer >= breakUnderMassDelay) BreakAt(breakWhereHit ? l.index : breakIndex);
+        }
+
+        // ------------------------------------------------------------------ sleeping (performance)
+
+        void Disturb()
+        {
+            lastDisturbed = Time.time;
+            sleeping = false;
+        }
+
+        void UpdateSleep()
+        {
+            if (!sleepWhenStill || Time.time < nextSleepCheck) return;
+            nextSleepCheck = Time.time + 0.2f;
+            if (sleeping)
+            {
+                // Something woke it (a hit, a joint): watch it again until it is still.
+                for (int i = 0; i < links.Count; i++)
+                    if (links[i] != null && links[i].IsAwake()) { sleeping = false; lastDisturbed = Time.time; break; }
+                return;
+            }
+            if (Time.time - lastDisturbed < sleepAfter) return;
+            float limit = sleepSpeed * sleepSpeed;
+            for (int i = 0; i < links.Count; i++)
+                if (links[i] != null && links[i].IsAwake() && links[i].GetVelocity().sqrMagnitude > limit) { lastDisturbed = Time.time - sleepAfter * 0.5f; return; }
+            // Every link is still: put the whole chain to sleep. Box2D wakes it when anything awake touches it.
+            for (int i = 0; i < links.Count; i++) if (links[i] != null) links[i].Sleep();
+            sleeping = true;
         }
 
         /// <summary>Break the joint above link <paramref name="linkIndex"/> (clamped so both ends keep at least one link).</summary>
@@ -471,7 +529,13 @@ namespace ProjectJuice
             if (breakJoint != null) Destroy(breakJoint);
             breakJoint = null;
             weightTimer = 0f;
-            for (int i = 0; i < links.Count; i++) if (links[i] != null) links[i].WakeUp();
+            Disturb();
+            for (int i = 0; i < links.Count; i++)
+                if (links[i] != null)
+                {
+                    links[i].WakeUp();
+                    links[i].collisionDetectionMode = CollisionDetectionMode2D.Continuous; // falling pieces must not tunnel through floors
+                }
 
             // 2. visuals and listeners (never touch physics).
             if (breakEffect != null) breakEffect.Play(at, Vector2.down);
@@ -481,6 +545,7 @@ namespace ProjectJuice
 
         internal void OnLinkCollision(int index, Collision2D c)
         {
+            Disturb();
             if (LinkImpact == null || c.contactCount == 0) return;
             float speed = c.relativeVelocity.magnitude;
             LinkImpact(c.GetContact(0).point, speed, index);
@@ -500,6 +565,7 @@ namespace ProjectJuice
                 rb.rotation = rb.transform.eulerAngles.z;
                 rb.SetVelocity(Vector2.zero);
                 rb.angularVelocity = 0f;
+                rb.collisionDetectionMode = continuousCollision ? CollisionDetectionMode2D.Continuous : CollisionDetectionMode2D.Discrete;
             }
             if (breakable && links.Count >= 2)
             {
@@ -520,6 +586,7 @@ namespace ProjectJuice
                 if (breakJoint != null) breakJoint.breakForce = jointBreakForce;
             }
             weightTimer = 0f;
+            Disturb();
             IsBroken = false;
             if (breakableObject != null && breakableObject.IsBroken) breakableObject.Restore();
         }
