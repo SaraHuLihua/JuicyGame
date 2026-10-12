@@ -41,6 +41,8 @@ namespace ProjectJuice
         float ungroundUntil;
         bool canLaunch;
         float airLaunchUntil;
+        float overspeedCap;
+        float overspeedUntil;
 
         public WormMaterial Material { get; private set; }
         public WormMaterialProfile Profile { get { EnsureInit(); return profile; } }
@@ -168,8 +170,9 @@ namespace ProjectJuice
                 canLaunch = false;
             }
 
-            // Global speed cap (web: 1400 px/s).
-            if (v.sqrMagnitude > maxSpeed * maxSpeed) v = v.normalized * maxSpeed;
+            // Global speed cap (web: 1400 px/s), raised for a moment by AllowOverspeed (trampoline).
+            float cap = SpeedCap;
+            if (v.sqrMagnitude > cap * cap) v = v.normalized * cap;
             rb.SetVelocity(v);
 
             // Remember the velocity the solver is about to use: impacts are computed from it.
@@ -197,7 +200,15 @@ namespace ProjectJuice
             if (Launched != null) Launched(rb.position);
         }
 
-        /// <summary>Instant push from a mechanism (piston, roller). Delta-v = impulse / mass: light worms fly further.</summary>
+        float SpeedCap { get { return Time.time < overspeedUntil ? Mathf.Max(maxSpeed, overspeedCap) : maxSpeed; } }
+
+        /// <summary>Raise the global speed cap to <paramref name="cap"/> for <paramref name="seconds"/> (a trampoline's super launch).</summary>
+        public void AllowOverspeed(float cap, float seconds)
+        {
+            overspeedCap = cap;
+            overspeedUntil = Time.time + seconds;
+        }
+
         /// <summary>
         /// Lets the worm launch without ground for the next moment (a fan holding it up). Call it every physics step
         /// it applies. Not a landing: the respawn point and the Landed event are untouched.
@@ -207,11 +218,13 @@ namespace ProjectJuice
             airLaunchUntil = Time.time + 0.05f;
         }
 
+        /// <summary>Instant push from a mechanism (piston, roller). Delta-v = impulse / mass: light worms fly further.</summary>
         public void AddExternalImpulse(Vector2 impulse)
         {
             EnsureInit();
             Vector2 v = rb.GetVelocity() + impulse / Mathf.Max(0.01f, rb.mass);
-            if (v.sqrMagnitude > maxSpeed * maxSpeed) v = v.normalized * maxSpeed;
+            float cap = SpeedCap;
+            if (v.sqrMagnitude > cap * cap) v = v.normalized * cap;
             rb.SetVelocity(v);
             BeginAirborne();
         }

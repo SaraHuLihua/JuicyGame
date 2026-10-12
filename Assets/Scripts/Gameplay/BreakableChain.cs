@@ -115,6 +115,21 @@ namespace ProjectJuice
         [Tooltip("On = it snaps at the link the worm hits or stands on. Off = always at Break At Link.")]
         public bool breakWhereHit = true;
 
+        [Header("Break strength (harder hit = more damage)")]
+        [Tooltip("Impact force (worm mass x fall speed: Rocky falling at 20 u/s = 50) needed for each EXTRA snap after the first. " +
+                 "Lower = shatters into more pieces. 0 = always a single snap.")]
+        [Min(0f)] public float forcePerExtraBreak = 18f;
+        [Tooltip("Most joints one hit can snap.")]
+        [Min(1)] public int maxBreaks = 5;
+        [Tooltip("Links between two snaps of the same hit.")]
+        [Min(1)] public int breakSpacing = 3;
+        [Tooltip("Kick given to the links near the hit, per unit of impact force (impulse). 0 = they just fall.")]
+        [Min(0f)] public float impactPush = 0.012f;
+        [Tooltip("How many links around the hit get kicked.")]
+        [Min(0)] public int pushRadius = 6;
+        [Tooltip("Break VFX size grows with the hit: Effect Scale x (1 + extra snaps x this).")]
+        [Min(0f)] public float effectGrowth = 0.35f;
+
         [Header("Break VFX (optional, purely visual)")]
         [Tooltip("Played exactly at the break point. Leave empty for no effect, or use the one on this prefab.")]
         public BreakEffect breakEffect;
@@ -136,6 +151,9 @@ namespace ProjectJuice
         readonly List<HingeJoint2D> prevJoints = new List<HingeJoint2D>(); // joint of link i to link i-1 (or the top pin)
         HingeJoint2D breakJoint;
         int breakIndex;
+        // Set just before HandleBreak by the hit that caused it (force, push direction). Weight / Break() = one plain snap.
+        float pendingForce;
+        Vector2 pendingDir = Vector2.down;
         float weightTimer;
         float lastDisturbed;
         float nextSleepCheck;
@@ -447,6 +465,8 @@ namespace ProjectJuice
         void OnBreakableBroken(ImpactInfo hit)
         {
             ChainLinkListener l = hit.collider != null ? hit.collider.GetComponent<ChainLinkListener>() : null;
+            pendingForce = hit.impactForce;
+            pendingDir = hit.normal.sqrMagnitude > 0.001f ? -hit.normal : Vector2.down; // normal points to the worm: push away from it
             if (breakWhereHit && l != null && l.chain == this) BreakAt(l.index);
             else Break();
         }
@@ -519,15 +539,44 @@ namespace ProjectJuice
             HandleBreak();
         }
 
+        /// <summary>How many joints a hit of this force snaps (1 at the threshold, one more every Force Per Extra Break).</summary>
+        public int BreaksForForce(float force)
+        {
+            float threshold = breakableObject != null ? breakableObject.breakThreshold : 0f;
+            if (forcePerExtraBreak <= 0f || force <= threshold) return 1;
+            return Mathf.Clamp(1 + Mathf.FloorToInt((force - threshold) / forcePerExtraBreak), 1, Mathf.Max(1, maxBreaks));
+        }
+
         void HandleBreak()
         {
             if (IsBroken) return;
             IsBroken = true;
             Vector2 at = BreakPointWorld;
+            float force = pendingForce;
+            Vector2 dir = pendingDir;
+            pendingForce = 0f;
+            pendingDir = Vector2.down;
 
             // 1. physics: remove the connection, the lower links are now free bodies.
             if (breakJoint != null) Destroy(breakJoint);
+            if (breakIndex < prevJoints.Count && prevJoints[breakIndex] == breakJoint) prevJoints[breakIndex] = null;
             breakJoint = null;
+            // A harder hit snaps more joints, spread around the first one (above and below in turn).
+            int breaks = BreaksForForce(force);
+            List<Vector2> extraPoints = new List<Vector2>();
+            for (int k = 1, made = 1; made < breaks && k <= links.Count; k++)
+            {
+                int[] candidates = { breakIndex + k * breakSpacing, breakIndex - k * breakSpacing };
+                for (int c = 0; c < 2 && made < breaks; c++)
+                {
+                    int idx = candidates[c];
+                    if (idx < 1 || idx >= links.Count || prevJoints[idx] == null || links[idx] == null) continue;
+                    extraPoints.Add(links[idx].transform.TransformPoint(new Vector3(0f, builtLinkLength * 0.5f, 0f)));
+                    Destroy(prevJoints[idx]);
+                    prevJoints[idx] = null;
+                    made++;
+                }
+            }
             weightTimer = 0f;
             Disturb();
             for (int i = 0; i < links.Count; i++)
@@ -536,9 +585,26 @@ namespace ProjectJuice
                     links[i].WakeUp();
                     links[i].collisionDetectionMode = CollisionDetectionMode2D.Continuous; // falling pieces must not tunnel through floors
                 }
+            // The links near the hit get kicked away from the worm, harder for harder hits.
+            if (impactPush > 0f && force > 0f)
+                for (int i = Mathf.Max(0, breakIndex - pushRadius); i <= Mathf.Min(links.Count - 1, breakIndex + pushRadius); i++)
+                {
+                    if (links[i] == null) continue;
+                    float falloff = 1f - Mathf.Abs(i - breakIndex) / (float)(pushRadius + 1);
+                    Vector2 jitter = new Vector2(UnityEngine.Random.Range(-0.35f, 0.35f), UnityEngine.Random.Range(-0.2f, 0.2f));
+                    links[i].AddForce((dir.normalized + jitter) * force * impactPush * falloff, ForceMode2D.Impulse);
+                    links[i].angularVelocity += UnityEngine.Random.Range(-1f, 1f) * force * 4f * falloff;
+                }
 
             // 2. visuals and listeners (never touch physics).
-            if (breakEffect != null) breakEffect.Play(at, Vector2.down);
+            if (breakEffect != null)
+            {
+                float baseScale = breakEffect.effectScale;
+                breakEffect.effectScale = baseScale * (1f + (breaks - 1) * effectGrowth);
+                breakEffect.Play(at, dir);
+                breakEffect.effectScale = baseScale;
+                for (int i = 0; i < extraPoints.Count; i++) breakEffect.Play(extraPoints[i], dir);
+            }
             if (Broke != null) Broke(at);
             onBreak.Invoke();
         }
@@ -569,9 +635,9 @@ namespace ProjectJuice
             }
             if (breakable && links.Count >= 2)
             {
-                int b = breakIndex; // where it actually broke
-                if (prevJoints[b] == null)
+                for (int b = 1; b < links.Count; b++) // every joint a hit snapped
                 {
+                    if (prevJoints[b] != null || links[b] == null) continue;
                     HingeJoint2D j = links[b].gameObject.AddComponent<HingeJoint2D>();
                     j.autoConfigureConnectedAnchor = false;
                     j.enableCollision = false;

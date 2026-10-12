@@ -30,6 +30,11 @@ namespace ProjectJuice
         public bool CanLaunch { get { return physics.CanLaunch && !inputLocked && !IsDead; } }
         public int LaunchCount { get { return counter.Count; } }
         public Vector2 LastLandingPosition { get; private set; }
+        /// <summary>True once the worm has touched a Checkpoint (cleared by ResetRun).</summary>
+        public bool HasCheckpoint { get; private set; }
+        public Vector2 CheckpointPosition { get; private set; }
+        /// <summary>Where a death sends the worm back to: the checkpoint if one was reached, else the last landing.</summary>
+        public Vector2 RespawnPosition { get { return HasCheckpoint ? CheckpointPosition : LastLandingPosition; } }
         public bool inputLocked;
         public bool IsDead { get; private set; }
 
@@ -112,14 +117,15 @@ namespace ProjectJuice
             // Legacy instant-respawn behaviour used by existing hazards/tests.
             // Fires Died so the Death anim can flash, then immediately revives at last landing.
             if (!IsDead) Die(reason);
-            physics.Teleport(LastLandingPosition);
+            physics.Teleport(RespawnPosition);
             IsDead = false;
             if (Revived != null) Revived();
         }
 
+        /// <summary>R key. Dead: back to the checkpoint (or the last landing if none). Alive: back to the last landing.</summary>
         public void RespawnAtLastLanding()
         {
-            physics.Teleport(LastLandingPosition);
+            physics.Teleport(IsDead ? RespawnPosition : LastLandingPosition);
             if (IsDead)
             {
                 IsDead = false;
@@ -134,10 +140,20 @@ namespace ProjectJuice
             physics.SetMaterial(material);
             physics.Teleport(position);
             LastLandingPosition = position;
+            HasCheckpoint = false;
             counter.ResetCount();
             if (Revived != null) Revived();
             if (MaterialChanged != null) MaterialChanged(material);
         }
+
+        /// <summary>Checkpoints call this: deaths now send the worm back here.</summary>
+        public void SetCheckpoint(Vector2 position)
+        {
+            HasCheckpoint = true;
+            CheckpointPosition = position;
+        }
+
+        public void ClearCheckpoint() { HasCheckpoint = false; }
 
         // ------------------------------------------------------------------ forwarding
 
