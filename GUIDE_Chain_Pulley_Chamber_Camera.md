@@ -101,7 +101,8 @@ Every link is a Rigidbody2D with a joint. The `Chain` in `MechanicsTest` has Lin
 - **Sleep When Still** (on): once a chain has stopped moving for **Sleep After** (1 s), with every link slower than **Sleep Speed**, the whole chain goes to sleep and costs almost nothing. It wakes up by itself when the worm (or anything moving) touches it, and goes back to sleep when it's still again. You can unhide all your chains.
 - **Continuous Collision** (off): continuous collision on every link was the most expensive part. Now only the part that falls after a break switches to continuous collision, so it still can't fall through floors.
 - Links now ignore only the neighbours their capsules can actually reach, instead of every pair. That was 7,750 calls per chain when the level loaded.
-- If a chain builds more than 60 links, the Console says so. The simplest extra saving is fewer links: for the same length, use a smaller **Link Count** (Count × Scale Y is what gets built).
+- **Max Physics Links** (40): a long chain still draws every ring, but groups them several per physics body (125 rings become 32 bodies of 4 rings, same length and same total weight). Five chains went from about 625 bodies to about 160. Lower = lighter but a bit stiffer; 0 = one body per ring like before.
+- If a chain still builds more than 60 bodies, the Console says so. The simplest extra saving is fewer links: for the same length, use a smaller **Link Count** (Count × Scale Y is what gets built).
 
 ### Changing the look
 - **Ring Sprites / Bar Sprites**: swap or add variants. Leave Bar Sprites empty to get rings on every link.
@@ -441,7 +442,8 @@ It turns **clockwise in clicks**: a quick turn of one tooth, a small overshoot t
 
 ### Launch
 - Press **anywhere on the screen** and drag: the launch works exactly as if you had pressed on the worm (it always did; now a press made while the worm is still landing is also kept, and the aim starts as soon as it can launch).
-- While aiming, the **arc** (`Untitled_Artwork 14_4`) sits under the worm like a cradle and widens with power, and the **arrow** (`Untitled_Artwork 14_5`) points where you'll go and gets longer with power. Both pulse at full power. Settings on `Worm` prefab > `WormLauncher` > *Aim feedback*: **Arc Width**, **Arc Drop**, **Arc Follows Aim** (on = the arc sits behind the worm, opposite the launch), **Arrow Length**, **Arrow Gap**, **Arrow Width**, **Full Power Pulse**, colour and sorting order. Empty sprites = the old band.
+- While aiming, the **arc** (`Untitled_Artwork 14_4`) is a slingshot pocket: it hugs the back of the worm on the side you pull toward, open toward the launch, and is pulled further back and stretched deeper as the power grows. The **arrow** (`Untitled_Artwork 14_5`) points where you'll go and gets longer with power. Both pulse at full power. Settings on `Worm` prefab > `WormLauncher` > *Aim feedback*: **Arc Placement** (Behind = pocket, Under = the old cradle, Off = no arc), **Arc Width**, **Arc Drop** (distance from the worm), **Arc Pull Back**, **Arc Stretch**, **Arrow Length**, **Arrow Gap**, **Arrow Width**, **Full Power Pulse**, colour and sorting order. Empty sprites = the old band.
+- The **trajectory** is white chalk: the dots of `Untitled_Artwork 14_0` and `_1` in turn, each turned a little differently, shrinking (**Dot End Scale**) and fading toward the end. Where the shot would come to rest, the chalk circle `Untitled_Artwork 14_3` marks the landing (**Landing Marker Size**). Colour: **Trajectory Color**. Empty **Trajectory Dot Sprites** = plain circles.
 - The worm also winds up while you aim: it squashes toward the launch direction, more with more power (`WormVisual` > **Aim Squash**), and stretches when it goes.
 
 ### GameJuice (shake, dust, freeze frame)
@@ -453,6 +455,15 @@ It turns **clockwise in clicks**: a quick turn of one tooth, a small overshoot t
 ### Main menu zoom
 - `Art/UI/Image.controller` now starts in an empty **Idle** state, so `mainMenuZoomIn` no longer plays when the menu opens.
 - On the button: `LevelLoader` (`ButtonTransitionScript`) plays the zoom first (**Zoom Animator** = the menu's `Image`, skipping the clip's first **Zoom Skip Start** 0.9 s where nothing moves), waits **Zoom Before Transition** (0.6 s), then starts the transition (**Transition Time**) and loads the scene. A second click is ignored.
+
+## 16. Performance (what was making it lag)
+- **Chains**: about 625 physics bodies for 5 chains. Now grouped (see *Max Physics Links* in section 1).
+- **Gears**: 12 `GearStepper` gears, each with a 316-point collider, moved every physics step even while standing still, and were never allowed to sleep. Now a gear only moves during a click, and its collider is simplified at Play (**Collider Simplify**, 0.03 units: the teeth stay, most points go; 0 = untouched).
+- **Slow frames feeding themselves**: with 120 physics steps per second and Unity's default *Maximum Allowed Timestep* of 0.333 s, one slow frame could run 40 physics steps, which made the next frame slow too. Now 0.1 s (`ProjectSettings > Time`, and `GameBootstrap` > **Max Frame Catch Up**).
+- **Debris and dust**: every shard was a new object, created and destroyed. Now they are reused, with at most 150 alive (`SimpleDebris.MaxActive`).
+- **Aim preview**: it re-simulated the whole shot every frame (up to 900 casts). Now only when the aim changes or every **Preview Refresh** (0.1 s), with at most **Max Preview Casts** (240).
+- **Belt drive**: checks whether its wheels moved every 8 frames instead of every frame.
+- To find what is still slow: *Window > Analysis > Profiler*, Play, and look at *Physics2D* and *Scripts* in the CPU module.
 
 ## 14. First things to check in Play mode (not verified here)
 1. Fan: walk into the air as Bouncy. You should rise and float near the green line. As Rocky you should stay on the ground. If Bouncy floats too high or too low, change **Lift Force**. If the air streaks are too strong or too faint, change the **Air Color** alpha.
@@ -467,6 +478,7 @@ It turns **clockwise in clicks**: a quick turn of one tooth, a small overshoot t
 10. Wheel: push it as Rocky. It should roll into the hole and stop there; you should be able to walk across. If it rolls away by itself at the start or doesn't reach the hole, tell me.
 11. Bounce pads: go down to the bottom of the Area G shaft. You should be thrown zigzag pad to pad up to the floor on the right at the top. If a hop hits a wall, move that pad slightly or lower its **Arc Height**.
 12. Checkpoint: touch it, then die on a hazard. You should come back at the flag after 1 second.
-13. Launch: press far from the worm and drag. The arc and arrow should appear at the worm and follow your drag.
+13. Launch: press far from the worm and drag. The arc should sit behind the worm on the side you pull, opening toward the launch, and the arrow should point the other way. The dots should be white chalk, with a chalk circle where you'll land.
+14. Lag: unhide everything and play. It should stay smooth. Watch the long chains: if they look too stiff, raise **Max Physics Links**. Watch the gears: if a tooth looks wrong to stand on, lower **Collider Simplify**.
 14. Super bounce: tick it on one pad and check it reaches the next one without hitting a wall.
 15. Menu: click the button. The image should zoom in first, then the transition, then the level.

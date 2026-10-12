@@ -170,7 +170,8 @@ namespace ProjectJuice
         void LateUpdate()
         {
             if (beltLine == null || beltCollider == null) FindParts();
-            Rebuild(false);
+            // In Play the wheels rarely move: look for changes every few frames instead of every frame.
+            if (!Application.isPlaying || (Time.frameCount & 7) == 0) Rebuild(false);
             if (!Application.isPlaying) return;
 
             float dt = Time.deltaTime;

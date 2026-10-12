@@ -4,10 +4,12 @@ using UnityEngine;
 namespace ProjectJuice
 {
     public enum AimRangeMode { Full, Upward, Custom }
+    public enum AimArcPlacement { Behind, Under, Off }
 
     /// <summary>
-    /// Slingshot aiming: press anywhere on the screen, drag back, release. Shows a dotted trajectory preview,
-    /// an arc under the worm and an arrow in the launch direction (sprites from Art/UI/Untitled_Artwork 14).
+    /// Slingshot aiming: press anywhere on the screen, drag back, release. Shows a white chalk trajectory
+    /// (dots + a ring where it lands), a slingshot pocket behind the worm and an arrow in the launch direction
+    /// (sprites from Art/UI/Untitled_Artwork 14).
     /// Only launches while the worm CanLaunch (grounded and settled), so there is no mid-air relaunch;
     /// a press made while it is still landing is kept and the aim starts as soon as it can launch.
     /// </summary>
@@ -37,21 +39,39 @@ namespace ProjectJuice
         public float trajectoryPreviewLength = 30f;
         [Range(0, 5)] public int previewBounces = 3;
         public float previewStep = 1f / 60f;
+        [Tooltip("Most physics casts the preview may do in one update. Lower = cheaper, shorter preview on fast shots.")]
+        [Min(10)] public int maxPreviewCasts = 240;
+        [Tooltip("Seconds between preview re-simulations while the aim does not change (moving mechanisms).")]
+        [Min(0f)] public float previewRefresh = 0.1f;
         public float dotSpacing = 0.55f;
+        [Tooltip("Size of the first dot (units). The dots shrink toward the end of the path.")]
         public float dotSize = 0.16f;
+        [Tooltip("Size of the last dot compared to the first.")]
+        [Range(0.1f, 1f)] public float dotEndScale = 0.45f;
+        [Tooltip("Chalk dots used in turn along the path (Untitled_Artwork 14_0 and _1). Empty = plain circles.")]
+        public Sprite[] trajectoryDotSprites;
+        [Tooltip("Chalk ring drawn where the worm will land (Untitled_Artwork 14_3). Empty = none.")]
+        public Sprite landingMarkerSprite;
+        [Tooltip("Ring size compared to the worm's diameter.")]
+        public float landingMarkerSize = 1.6f;
+        public Color trajectoryColor = new Color(1f, 1f, 1f, 0.95f);
 
         [Header("Aim feedback (arc + arrow)")]
-        [Tooltip("Half-arc drawn under the worm while aiming (Untitled_Artwork 14_4). Empty = the old white band.")]
+        [Tooltip("Half-arc drawn while aiming (Untitled_Artwork 14_4). Empty = the old white band.")]
         public Sprite aimArcSprite;
         [Tooltip("Arrow pointing where the worm will go (Untitled_Artwork 14_5).")]
         public Sprite aimArrowSprite;
         public Color aimFeedbackColor = Color.white;
         [Tooltip("Arc width (units) at no power and at full power.")]
         public Vector2 arcWidth = new Vector2(1.6f, 2.4f);
-        [Tooltip("How far under the worm's centre the arc sits (units).")]
-        public float arcDrop = 0.15f;
-        [Tooltip("Off = the arc stays under the worm like a cradle. On = it sits behind the worm, opposite the launch.")]
-        public bool arcFollowsAim = false;
+        [Tooltip("Behind = slingshot pocket on the pull side, open toward the launch, pulled back with power. Under = cradle under the worm. Off = no arc.")]
+        public AimArcPlacement arcPlacement = AimArcPlacement.Behind;
+        [Tooltip("Distance of the arc from the worm's centre (units), behind it or under it.")]
+        public float arcDrop = 0.2f;
+        [Tooltip("Behind only: how much further back the pocket is pulled at full power (units).")]
+        public float arcPullBack = 0.5f;
+        [Tooltip("Behind only: how much deeper the pocket stretches at full power (0.6 = 60%).")]
+        [Range(0f, 1.5f)] public float arcStretch = 0.6f;
         [Tooltip("Arrow length (units) at no power and at full power.")]
         public Vector2 arrowLength = new Vector2(0.7f, 1.9f);
         [Tooltip("Gap between the worm's centre and the arrow's tail (units).")]
@@ -74,6 +94,14 @@ namespace ProjectJuice
         Vector2 pressPx;
         SpriteRenderer arc;
         SpriteRenderer arrow;
+        SpriteRenderer landing;
+        bool lands;
+        Vector2 landPoint;
+        // Last simulated aim: the preview is only re-simulated when it changes (or every Preview Refresh).
+        Vector2 simDir;
+        float simPower = -1f;
+        Vector2 simPos;
+        float simTime;
 
         readonly List<Vector2> path = new List<Vector2>();
         readonly List<SpriteRenderer> dots = new List<SpriteRenderer>();
@@ -99,6 +127,8 @@ namespace ProjectJuice
             band.enabled = false;
             arc = MakeFeedback("AimArc", aimArcSprite);
             arrow = MakeFeedback("AimArrow", aimArrowSprite);
+            landing = MakeFeedback("AimLanding", landingMarkerSprite);
+            if (landing != null) landing.sortingOrder = feedbackSortingOrder - 2;
         }
 
         SpriteRenderer MakeFeedback(string n, Sprite s)
@@ -191,7 +221,8 @@ namespace ProjectJuice
             aimValid = true;
 
             if (arc != null || arrow != null) DrawFeedback(); else DrawBand();
-            if (showPreview) DrawPreview(); else HidePreview();
+            if (showPreview) DrawPreview();
+            else { for (int i = 0; i < dots.Count; i++) dots[i].enabled = false; if (landing != null) landing.enabled = false; }
         }
 
         float ClampAngle(float angleDeg)
@@ -223,25 +254,28 @@ namespace ProjectJuice
         {
             Vector2 origin = controller.Physics.Body.position;
             float pulse = aimPower >= 0.999f && fullPowerPulse > 0f ? 1f + fullPowerPulse * Mathf.Sin(Time.time * 18f) : 1f;
-            if (arc != null)
+            if (arc != null && arcPlacement != AimArcPlacement.Off)
             {
                 float w = Mathf.Lerp(arcWidth.x, arcWidth.y, aimPower) * pulse;
                 float k = w / Mathf.Max(0.01f, arc.sprite.bounds.size.x);
                 arc.enabled = true;
                 arc.color = aimFeedbackColor;
-                arc.transform.localScale = new Vector3(k, k * (1f + 0.25f * aimPower), 1f);
-                if (arcFollowsAim)
+                if (arcPlacement == AimArcPlacement.Behind)
                 {
-                    // Cradle behind the worm, open toward the launch: the drawn arc's open side faces the aim.
-                    arc.transform.position = origin - aimDir * arcDrop;
-                    arc.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(aimDir.x, -aimDir.y) * Mathf.Rad2Deg);
+                    // Slingshot pocket: hugs the back of the worm on the pull side, open toward the launch,
+                    // and is pulled back and stretched deeper as the power grows (like the rubber of a slingshot).
+                    arc.transform.localScale = new Vector3(k, k * (1f + arcStretch * aimPower), 1f);
+                    arc.transform.position = origin - aimDir * (arcDrop + arcPullBack * aimPower);
+                    arc.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(aimDir.x, -aimDir.y) * Mathf.Rad2Deg); // dome top away from the aim
                 }
                 else
                 {
+                    arc.transform.localScale = new Vector3(k, k * (1f + 0.25f * aimPower), 1f);
                     arc.transform.position = origin + Vector2.down * arcDrop;
                     arc.transform.rotation = Quaternion.Euler(0f, 0f, 180f); // drawn as a dome: flipped into a cradle
                 }
             }
+            else if (arc != null) arc.enabled = false;
             if (arrow != null)
             {
                 float len = Mathf.Lerp(arrowLength.x, arrowLength.y, aimPower) * pulse;
@@ -256,9 +290,11 @@ namespace ProjectJuice
 
         void HidePreview()
         {
+            simPower = -1f;
             if (band != null) band.enabled = false;
             if (arc != null) arc.enabled = false;
             if (arrow != null) arrow.enabled = false;
+            if (landing != null) landing.enabled = false;
             for (int i = 0; i < dots.Count; i++) dots[i].enabled = false;
         }
 
@@ -271,6 +307,11 @@ namespace ProjectJuice
             WormPhysics ph = controller.Physics;
             WormMaterialProfile p = ph.Profile;
             Vector2 pos = ph.Body.position;
+            bool same = simPower >= 0f && Mathf.Abs(aimPower - simPower) < 0.002f && Vector2.Dot(aimDir, simDir) > 0.99999f
+                        && (pos - simPos).sqrMagnitude < 0.0004f && Time.time - simTime < previewRefresh;
+            if (same) { PlaceLanding(ph); return; } // nothing changed: the dots already show this shot
+            simDir = aimDir; simPower = aimPower; simPos = pos; simTime = Time.time;
+            lands = false;
             Vector2 v = ph.PredictLaunchVelocity(aimDir, aimPower, launchForceMultiplier);
             Vector2 g = Physics2D.gravity * ph.Body.gravityScale;
             float r = ph.Collider.radius * 0.95f;
@@ -281,7 +322,7 @@ namespace ProjectJuice
             float travelled = 0f;
             int bouncesLeft = previewBounces;
 
-            for (int i = 0; i < 900 && travelled < trajectoryPreviewLength; i++)
+            for (int i = 0; i < maxPreviewCasts && travelled < trajectoryPreviewLength; i++)
             {
                 v += g * previewStep;
                 Vector2 step = v * previewStep;
@@ -309,7 +350,7 @@ namespace ProjectJuice
 
                     SurfaceProfile sp = Surface.ProfileOf(hit.collider);
                     float outSpeed = ns * p.GetRestitution(sp.type) * sp.restitutionMultiplier;
-                    if (outSpeed < p.stopBounceSpeed) break; // it would land here
+                    if (outSpeed < p.stopBounceSpeed) { lands = true; landPoint = pos; break; } // it would land here
                     Vector2 tangent = new Vector2(-n.y, n.x);
                     float vt = Vector2.Dot(v, tangent);
                     if (ns > p.stopBounceSpeed && n.y > 0.5f) vt *= Mathf.Lerp(1f, p.landingTangentialKeep, sp.landingGrip);
@@ -325,10 +366,13 @@ namespace ProjectJuice
                 }
             }
 
-            // Lay dots at equal spacing along the polyline.
+            // Lay chalk dots at equal spacing along the polyline, shrinking and fading toward the end.
+            float total = 0f;
+            for (int s = 1; s < path.Count; s++) total += Vector2.Distance(path[s - 1], path[s]);
+            int expected = Mathf.Clamp(Mathf.FloorToInt(total / Mathf.Max(0.05f, dotSpacing)), 1, 91);
             int used = 0;
             float carry = 0f;
-            Color c = p.color;
+            Color c = trajectoryColor;
             for (int s = 1; s < path.Count; s++)
             {
                 Vector2 a = path[s - 1];
@@ -341,8 +385,12 @@ namespace ProjectJuice
                     SpriteRenderer dot = GetDot(used++);
                     dot.enabled = true;
                     dot.transform.position = new Vector3(pt.x, pt.y, 0f);
-                    float fade = 1f - (float)used / 70f;
-                    dot.color = new Color(c.r, c.g, c.b, Mathf.Clamp01(fade) * 0.9f);
+                    float t = Mathf.Clamp01((used - 1) / (float)expected);
+                    float size = dotSize * Mathf.Lerp(1f, dotEndScale, t);
+                    Vector2 sb = dot.sprite != null ? (Vector2)dot.sprite.bounds.size : Vector2.one;
+                    float k = size / Mathf.Max(0.001f, Mathf.Max(sb.x, sb.y));
+                    dot.transform.localScale = new Vector3(k, k, 1f);
+                    dot.color = new Color(c.r, c.g, c.b, c.a * Mathf.Lerp(1f, 0.25f, t));
                     d += dotSpacing;
                     if (used > 90) break;
                 }
@@ -350,6 +398,19 @@ namespace ProjectJuice
                 if (used > 90) break;
             }
             for (int i = used; i < dots.Count; i++) dots[i].enabled = false;
+            PlaceLanding(ph);
+        }
+
+        void PlaceLanding(WormPhysics ph)
+        {
+            if (landing == null) return;
+            landing.enabled = lands;
+            if (!lands) return;
+            float d = ph.Collider.radius * 2f * landingMarkerSize * (1f + 0.06f * Mathf.Sin(Time.time * 10f));
+            float k = d / Mathf.Max(0.01f, landing.sprite.bounds.size.x);
+            landing.transform.position = new Vector3(landPoint.x, landPoint.y, 0f);
+            landing.transform.localScale = new Vector3(k, k, 1f);
+            landing.color = new Color(trajectoryColor.r, trajectoryColor.g, trajectoryColor.b, trajectoryColor.a * 0.6f);
         }
 
         bool CastFirst(WormPhysics ph, Vector2 pos, float radius, Vector2 dir, float dist, out RaycastHit2D result)
@@ -373,7 +434,10 @@ namespace ProjectJuice
         {
             while (dots.Count <= i)
             {
-                SpriteRenderer sr = PlaceholderSprites.Make("Dot", visualRoot, PlaceholderSprites.Circle, Color.white, Vector2.zero, new Vector2(dotSize, dotSize), 29);
+                int n = dots.Count;
+                Sprite chalk = trajectoryDotSprites != null && trajectoryDotSprites.Length > 0 ? trajectoryDotSprites[n % trajectoryDotSprites.Length] : null;
+                SpriteRenderer sr = PlaceholderSprites.Make("Dot", visualRoot, chalk != null ? chalk : PlaceholderSprites.Circle, Color.white, Vector2.zero, new Vector2(dotSize, dotSize), 29);
+                if (chalk != null) sr.transform.localRotation = Quaternion.Euler(0f, 0f, (n * 47) % 360); // hand-drawn: no two dots alike
                 dots.Add(sr);
             }
             return dots[i];
