@@ -152,14 +152,12 @@ namespace ProjectJuice
             int jumps = w != null ? w.LaunchCount : 0;
             Vector2 at = w != null && w.Physics != null ? w.Physics.Body.position : where;
 
-            // Chalk confetti burst + shake + short slow motion.
+            // Confetti: a pop from the worm, two cannons from the bottom corners, then a shower over the result
+            // screen. Plus shake and a short slow motion (the confetti keeps real time).
             GameJuice.Shake(0.25f);
-            for (int i = 0; i < 46; i++)
-            {
-                Vector2 v = new Vector2(Random.Range(-1f, 1f), Random.Range(0.4f, 1.6f)).normalized * Random.Range(6f, 16f);
-                Color c = i % 3 == 0 ? new Color(1f, 0.85f, 0.35f, 1f) : new Color(1f, 1f, 1f, 0.95f);
-                SimpleDebris.Spawn(at, v, c, Random.Range(0.1f, 0.24f), Random.Range(0.7f, 1.3f));
-            }
+            Confetti.Burst(at, 70);
+            Confetti.Cannons(45);
+            Confetti.Rain(4.5f, 28f);
             Time.timeScale = 0.3f;
             yield return new WaitForSecondsRealtime(0.45f);
             Time.timeScale = 1f;

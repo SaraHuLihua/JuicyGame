@@ -509,6 +509,12 @@ It turns **clockwise in clicks**: a quick turn of one tooth, a small overshoot t
 - `WormController` got the **PlayerMaterialSwitched** event AudioManager listens to (fired only by your Space / right-click switch); without it the script didn't compile.
 - **Trail** (`WormTrail` on the Worm prefab): while the worm moves faster than **Min Speed** (4) it leaves a streak in the colour of its outside, pink when Squishy and purple when Rocky, blending in **Color Blend** (0.15 s) on a switch. **Length** (0.3 s), **Width** (0.8 of the worm), **Opacity** (0.75) and both colours on the component. It is wiped on death and respawn, and drawn behind the worm.
 
+## 25. Round 12: confetti, Rocky debris, bloom, red death
+- **Level complete confetti** (`Confetti`): paper confetti in the game colours (pink, lilac, gold, mint, sky, white) pops from the worm, two cannons fire from the bottom corners, then it keeps raining over the result screen for 4.5 s. The pieces slow down in the air, flutter, sway and flip over (the back is darker). It is drawn just above the result screen and lets clicks through. Amounts in `LevelFlow.Celebrate`.
+- **Rocky debris** (`GameJuice` > *Rocky debris*): only in Heavy form. Hitting something from **Heavy Debris From Speed** (4) knocks out rock chips (up to **Max Rock Chips**, 16, on the hardest hits) in **Rock Color** / **Rock Color 2**; rolling on the ground faster than **Gravel From Speed** (3.5) leaves a trickle of gravel behind (**Gravel Rate**). Squishy keeps the soft dust only.
+- **Bloom** (`CameraFx` on the Main Camera of MechanicsTest and MainMenu, shader `Assets/Shaders/CameraFx.shader`): the bright parts of the image (white chalk, sparks, the worm's colours) glow softly. **Threshold** (0.75, lower = more glows), **Intensity** (0.7), **Radius** (4), **Tint**. Works with the built-in renderer and in WebGL; the UI is not blurred.
+- **Death turns the screen red** (same `CameraFx`, *Death*): when the worm dies the world drains to red with dark red edges in **Death Fade In** (0.18 s), and the colours come back on respawn (**Death Fade Out** 0.45 s). **Death Color**, **Death Strength**, **Death Vignette**. The UI stays normal.
+
 ## 14. First things to check in Play mode (not verified here)
 1. Fan: walk into the air as Bouncy. You should rise and float near the green line. As Rocky you should stay on the ground. If Bouncy floats too high or too low, change **Lift Force**. If the air streaks are too strong or too faint, change the **Air Color** alpha.
 2. Gear: it clicks clockwise one tooth at a time. If a click looks like more or less than one tooth, adjust **Step Angle**.
@@ -542,3 +548,7 @@ It turns **clockwise in clicks**: a quick turn of one tooth, a small overshoot t
 30. Main menu: click the button. You should see the gears, the rings and the steam during the zoom.
 31. Top left: "Launches 0" fully visible.
 32. Trail: launch as Squishy, then switch to Rocky in the air. The streak should be pink, then turn purple; it should not draw a line when you respawn.
+33. Finish the level: confetti should pop from the worm and both bottom corners, then rain over the result screen while the buttons still work.
+34. Rocky: hit a wall hard and roll fast on a floor. Chips should fly on the hit and gravel trail behind the roll; as Squishy only dust.
+35. Bloom: the chalk lines should glow softly. If the whole image looks washed out, raise **Threshold** on Main Camera > CameraFx.
+36. Die (saw or spikes): the screen should turn red with dark edges, the counter and controls should not; it should clear when you come back.
