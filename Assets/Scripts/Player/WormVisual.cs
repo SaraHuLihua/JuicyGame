@@ -59,6 +59,8 @@ namespace ProjectJuice
         public float tiltMaxDegrees = 10f;
         public float popScale = 1.35f;
         public float popSeconds = 0.12f;
+        [Tooltip("While aiming the worm squashes toward the launch direction, more with more power (slingshot wind-up). 0 = off.")]
+        [Range(0f, 0.6f)] public float aimSquash = 0.28f;
 
         WormController controller;
         SpriteRenderer body;
@@ -327,6 +329,14 @@ namespace ProjectJuice
             float recover = IsHeavy ? heavyRecover : squishyRecover;
             if (squash > 0f) squash = Mathf.MoveTowards(squash, 0f, Time.deltaTime * recover * Mathf.Max(squash, 0.25f));
             if (pop > 0f) pop = Mathf.MoveTowards(pop, 0f, Time.deltaTime / Mathf.Max(0.01f, popSeconds));
+
+            // wind-up while aiming: compressed along the launch direction, released by OnLaunched
+            WormLauncher aimer = controller.Launcher;
+            if (aimSquash > 0f && aimer != null && aimer.AimValid && !controller.IsDead)
+            {
+                float want = aimer.AimPower * aimSquash * (IsHeavy ? 0.6f : 1f);
+                if (want > squash) { squash = Mathf.MoveTowards(squash, want, Time.deltaTime * 4f); squashNormal = aimer.AimDirection; }
+            }
 
             // air stretch follows speed (both materials, heavy less)
             Vector2 vel = controller.Physics.Velocity;

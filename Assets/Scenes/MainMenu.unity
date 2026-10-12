@@ -1335,6 +1335,10 @@ MonoBehaviour:
   transition: {fileID: 2004265748}
   transitionTime: 2
   delayBeforeTransition: 0
+  zoomAnimator: {fileID: 932207742}
+  zoomState: mainMenuZoomIn
+  zoomSkipStart: 0.9
+  zoomBeforeTransition: 0.6
 --- !u!224 &1824091700
 RectTransform:
   m_ObjectHideFlags: 0

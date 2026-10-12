@@ -222,6 +222,8 @@ namespace ProjectJuice
             state = State.Firing;
             timer = 0f;
             cooldownUntil = Time.time + fireTime + returnTime + cooldown;
+            GameJuice.Shake(0.3f);
+            GameJuice.Puff(head.position, transform.up, 8, 1.2f);
             onFire.Invoke();
         }
 
