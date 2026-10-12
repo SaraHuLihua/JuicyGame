@@ -3918,6 +3918,18 @@ PrefabInstance:
       value: Worm
       objectReference: {fileID: 0}
     - target: {fileID: 4820468035384370244, guid: db57398ddd7594c06a02eb103591222b, type: 3}
+      propertyPath: deathFps
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4820468035384370244, guid: db57398ddd7594c06a02eb103591222b, type: 3}
+      propertyPath: swapBouncyRockyArt
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4820468035384370244, guid: db57398ddd7594c06a02eb103591222b, type: 3}
+      propertyPath: visualSizeMultiplier
+      value: 4.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4820468035384370244, guid: db57398ddd7594c06a02eb103591222b, type: 3}
       propertyPath: 'rockyIdle.Array.data[0]'
       value: 
       objectReference: {fileID: 21300000, guid: 915e0727015374b718d74f0f228a2257, type: 3}
@@ -3998,6 +4010,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 21300000, guid: b9e4421b0264e4b6c89bab1db8a6f957, type: 3}
     - target: {fileID: 4820468035384370244, guid: db57398ddd7594c06a02eb103591222b, type: 3}
+      propertyPath: freezeJuiceDuringTransition
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4820468035384370244, guid: db57398ddd7594c06a02eb103591222b, type: 3}
       propertyPath: 'rockyToBouncy.Array.data[0]'
       value: 
       objectReference: {fileID: 21300000, guid: bc405780e35af42a4a73edd6d5cdb157, type: 3}
@@ -4015,15 +4031,15 @@ PrefabInstance:
       objectReference: {fileID: 21300000, guid: c2731055f582744bfb40b0d9cec42499, type: 3}
     - target: {fileID: 5905891098378683059, guid: db57398ddd7594c06a02eb103591222b, type: 3}
       propertyPath: m_LocalScale.x
-      value: 3.647256
+      value: 1.5518345
       objectReference: {fileID: 0}
     - target: {fileID: 5905891098378683059, guid: db57398ddd7594c06a02eb103591222b, type: 3}
       propertyPath: m_LocalScale.y
-      value: 3.647256
+      value: 1.5518345
       objectReference: {fileID: 0}
     - target: {fileID: 5905891098378683059, guid: db57398ddd7594c06a02eb103591222b, type: 3}
       propertyPath: m_LocalScale.z
-      value: 3.647256
+      value: 1.5518345
       objectReference: {fileID: 0}
     - target: {fileID: 5905891098378683059, guid: db57398ddd7594c06a02eb103591222b, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4067,7 +4083,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 5905891098378683059, guid: db57398ddd7594c06a02eb103591222b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1849794766}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: db57398ddd7594c06a02eb103591222b, type: 3}
 --- !u!1 &438020106
@@ -6399,7 +6418,6 @@ Transform:
   - {fileID: 512559212}
   - {fileID: 441516322}
   - {fileID: 1299079034}
-  - {fileID: 1849794766}
   m_Father: {fileID: 705904770}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &680387288
@@ -15655,12 +15673,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1849794765}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -16.38, y: 1, z: 0}
-  m_LocalScale: {x: 1.4868935, y: 1.4868935, z: 1.4868935}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.012888268, y: -0.075, z: 0}
+  m_LocalScale: {x: 0.9581522, y: 0.9581522, z: 0.9581522}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 675498434}
+  m_Father: {fileID: 1881432465}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1849794767
 MonoBehaviour:
