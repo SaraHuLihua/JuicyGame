@@ -13,8 +13,8 @@ namespace ProjectJuice
         public static WormController Instance { get; private set; }
 
         public WormMaterial startMaterial = WormMaterial.Squishy;
-        [Tooltip("Falling below this world Y respawns the worm at its last landing.")]
-        public float respawnBelowY = -40f;
+        [Tooltip("Falling below this world Y respawns the worm at its last landing. Keep it below the lowest floor of every level (MechanicsTest goes down to about y -70).")]
+        public float respawnBelowY = -100f;
 
         WormPhysics physics;
         WormLauncher launcher;

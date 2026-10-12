@@ -187,7 +187,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProjectJuice.WormController
   startMaterial: 0
-  respawnBelowY: -40
+  respawnBelowY: -100
   inputLocked: 0
 --- !u!1 &7592488185131060239
 GameObject:
