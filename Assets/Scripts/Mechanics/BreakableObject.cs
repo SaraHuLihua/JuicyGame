@@ -21,6 +21,8 @@ namespace ProjectJuice
         [Range(0f, 1f), Tooltip("Hits at or above this fraction of the threshold crack it and add damage.")]
         public float crackFraction = 0.5f;
         public bool accumulateDamage = true;
+        [Tooltip("Hits from a worm lighter than this never crack or break it, however fast (worm mass: Squishy 0.3, Heavy 2.5). 0 = off, only the impact force counts.")]
+        public float minimumMass = 0f;
         public int shardCount = 10;
         public Color shardColor = new Color(0.76f, 0.70f, 0.50f);
 
@@ -55,8 +57,11 @@ namespace ProjectJuice
             colliders = GetComponentsInChildren<Collider2D>();
         }
 
-        public bool WouldBreak(float impactForce)
+        public bool WouldBreak(float impactForce) { return WouldBreak(impactForce, float.MaxValue); }
+
+        public bool WouldBreak(float impactForce, float wormMass)
         {
+            if (wormMass < minimumMass) return false;
             return !IsBroken && (impactForce >= breakThreshold || (accumulateDamage && impactForce >= breakThreshold * crackFraction && Damage + impactForce / breakThreshold >= 1f));
         }
 
@@ -65,6 +70,7 @@ namespace ProjectJuice
         {
             if (IsBroken) return false;
             float f = hit.impactForce;
+            if (minimumMass > 0f && hit.normalSpeed > 0.0001f && f / hit.normalSpeed < minimumMass) return false; // impactForce = mass x normalSpeed
 
             if (f >= breakThreshold) { Break(hit); return true; }
 

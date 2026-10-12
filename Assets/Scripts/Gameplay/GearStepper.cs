@@ -9,6 +9,8 @@ namespace ProjectJuice
     /// A KINEMATIC Rigidbody2D is turned with MoveRotation in FixedUpdate (same approach as RotatingChamber),
     /// so a worm standing on a tooth is carried by real contacts and the collider never teleports.
     /// The object keeps its own collider (PolygonCollider2D on FG_Props_1_45).
+    /// Crushing: while it turns, a worm squeezed between the gear and anything else (wall, floor, another
+    /// mechanism) dies, like touching a Hazard.
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
     [DisallowMultipleComponent]
@@ -35,6 +37,15 @@ namespace ProjectJuice
         [Tooltip("Seconds to wait before the first click.")]
         [Min(0f)] public float startDelay = 0f;
 
+        [Header("Crushing")]
+        [Tooltip("The worm dies when the turning gear squeezes it against something else.")]
+        public bool crushesPlayer = true;
+        [Tooltip("How opposite the two pushes must be (1 = exactly face to face, 0.3 = anything pushing from roughly the other side).")]
+        [Range(0f, 1f)] public float crushOpposition = 0.4f;
+        [Tooltip("Seconds the worm must stay squeezed before it dies (filters out a tooth just brushing past).")]
+        [Min(0f)] public float crushTime = 0.04f;
+        public UnityEvent onCrushedPlayer;
+
         [Header("Sound / events (optional)")]
         [Tooltip("Played on every click. Empty = silent.")]
         public AudioClip clickSound;
@@ -52,6 +63,8 @@ namespace ProjectJuice
         float fromAngle;   // rotation at the start of the current click
         float toAngle;     // rotation at the end of the current click (unwrapped degrees)
         float angle;
+        float crushTimer;
+        static readonly ContactPoint2D[] contacts = new ContactPoint2D[16];
 
         public bool IsTurning { get { return turning; } }
         /// <summary>Clicks done since the start.</summary>
@@ -106,6 +119,44 @@ namespace ProjectJuice
                 }
             }
             body.MoveRotation(angle);
+            CheckCrush(dt);
+        }
+
+        // The collider in a contact that does not belong to the worm (works whichever way round Unity reports it).
+        static Collider2D OtherThan(Rigidbody2D worm, ContactPoint2D c)
+        {
+            return c.collider != null && c.collider.attachedRigidbody == worm ? c.otherCollider : c.collider;
+        }
+
+        void CheckCrush(float dt)
+        {
+            WormController w = WormController.Instance;
+            if (!crushesPlayer || phase == Phase.Waiting || w == null || w.IsDead || w.Physics == null) { crushTimer = 0f; return; }
+            Rigidbody2D worm = w.Physics.Body;
+            Vector2 centre = worm.position;
+            int n = worm.GetContacts(contacts);
+            // Push directions (contact point -> worm centre) from the gear and from everything else.
+            bool squeezed = false;
+            for (int i = 0; i < n && !squeezed; i++)
+            {
+                Collider2D gearSide = OtherThan(worm, contacts[i]);
+                if (gearSide == null || gearSide.attachedRigidbody != body) continue;
+                Vector2 fromGear = (centre - contacts[i].point).normalized;
+                for (int j = 0; j < n; j++)
+                {
+                    Collider2D other = OtherThan(worm, contacts[j]);
+                    if (other == null || other.isTrigger || other.attachedRigidbody == body) continue;
+                    Vector2 fromOther = (centre - contacts[j].point).normalized;
+                    if (Vector2.Dot(fromGear, fromOther) <= -crushOpposition) { squeezed = true; break; }
+                }
+            }
+            crushTimer = squeezed ? crushTimer + dt : 0f;
+            if (crushTimer >= crushTime && crushTimer > 0f)
+            {
+                crushTimer = 0f;
+                w.Die("crushed: " + name);
+                onCrushedPlayer.Invoke();
+            }
         }
 
         void BeginStep()

@@ -40,6 +40,7 @@ namespace ProjectJuice
         float nonLandingTimer;
         float ungroundUntil;
         bool canLaunch;
+        float airLaunchUntil;
 
         public WormMaterial Material { get; private set; }
         public WormMaterialProfile Profile { get { EnsureInit(); return profile; } }
@@ -53,7 +54,7 @@ namespace ProjectJuice
         /// <summary>Touching a surface that allows landing (or rescued). Material switching needs this.</summary>
         public bool IsGrounded { get; private set; }
         /// <summary>Grounded AND settled: the player may aim and launch.</summary>
-        public bool CanLaunch { get { return canLaunch; } }
+        public bool CanLaunch { get { return canLaunch || (Time.time < airLaunchUntil && Time.time >= ungroundUntil); } }
         public SurfaceType? GroundSurfaceType { get { return ground != null && ground.HasSupport && ground.Surface != null ? ground.Surface.type : (SurfaceType?)null; } }
 
         public event Action<WormMaterial> MaterialApplied;
@@ -197,6 +198,15 @@ namespace ProjectJuice
         }
 
         /// <summary>Instant push from a mechanism (piston, roller). Delta-v = impulse / mass: light worms fly further.</summary>
+        /// <summary>
+        /// Lets the worm launch without ground for the next moment (a fan holding it up). Call it every physics step
+        /// it applies. Not a landing: the respawn point and the Landed event are untouched.
+        /// </summary>
+        public void AllowLaunchInAir()
+        {
+            airLaunchUntil = Time.time + 0.05f;
+        }
+
         public void AddExternalImpulse(Vector2 impulse)
         {
             EnsureInit();
@@ -209,6 +219,7 @@ namespace ProjectJuice
         void BeginAirborne()
         {
             ungroundUntil = Time.time + ungroundAfterLaunch;
+            airLaunchUntil = 0f;
             settledTimer = 0f;
             nonLandingTimer = 0f;
             canLaunch = false;
