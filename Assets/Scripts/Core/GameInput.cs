@@ -59,6 +59,36 @@ namespace ProjectJuice
             }
         }
 
+        static readonly System.Collections.Generic.List<Vector2> presses = new System.Collections.Generic.List<Vector2>();
+
+        /// <summary>
+        /// Screen positions of every press that started this frame: each new finger on a touch screen
+        /// (so a second finger can tap a button while the first one aims), otherwise the left mouse button.
+        /// </summary>
+        public static System.Collections.Generic.List<Vector2> PressesThisFrame()
+        {
+            presses.Clear();
+#if ENABLE_INPUT_SYSTEM
+            Touchscreen ts = Touchscreen.current;
+            if (ts != null)
+                foreach (UnityEngine.InputSystem.Controls.TouchControl t in ts.touches)
+                    if (t.press.wasPressedThisFrame) presses.Add(t.position.ReadValue());
+            if (presses.Count == 0 && LeftDown) presses.Add(PointerPosition);
+#else
+            if (Input.touchCount > 0)
+            {
+                // Touches also fake a mouse click for touch 0: read the touches only, so a tap counts once.
+                for (int i = 0; i < Input.touchCount; i++)
+                {
+                    Touch t = Input.GetTouch(i);
+                    if (t.phase == TouchPhase.Began) presses.Add(t.position);
+                }
+            }
+            else if (Input.GetMouseButtonDown(0)) presses.Add(Input.mousePosition);
+#endif
+            return presses;
+        }
+
         public static bool SwitchDown    { get { return KeyDown(0); } }
         public static bool EscapeDown    { get { return KeyDown(1); } }
         public static bool RespawnDown   { get { return KeyDown(2); } }

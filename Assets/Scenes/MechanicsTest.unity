@@ -15831,6 +15831,7 @@ MonoBehaviour:
   - {fileID: -652264503, guid: 567514bef2cfa49429f9199f2fc49805, type: 3}
   spaceIcon: {fileID: 1634819909, guid: 567514bef2cfa49429f9199f2fc49805, type: 3}
   controlsScale: 0.8
+  tapIconsToSwitch: 1
   titleFont: {fileID: 11400000, guid: 09e39c13be4514d2b97b059971128f51, type: 2}
   textFont: {fileID: 11400000, guid: c3955e6a651344a42ba995004917ba70, type: 2}
 --- !u!1 &880000101

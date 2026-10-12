@@ -157,7 +157,7 @@ namespace ProjectJuice
             if (!aiming)
             {
                 // The press can happen anywhere and a little early (still landing): it is kept while held.
-                if (GameInput.LeftDown) { pressHeld = true; pressPx = GameInput.PointerPosition; }
+                if (GameInput.LeftDown && !ControlsHud.IsOverButton(GameInput.PointerPosition)) { pressHeld = true; pressPx = GameInput.PointerPosition; } // a tap on the form buttons only switches
                 if (GameInput.RightDown || GameInput.EscapeDown) pressHeld = false;
                 if (pressHeld && controller.CanLaunch) { Begin(pressPx); pressHeld = false; }
                 if (GameInput.LeftUp) pressHeld = false;
