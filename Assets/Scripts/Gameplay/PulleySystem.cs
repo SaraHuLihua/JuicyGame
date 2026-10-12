@@ -30,9 +30,9 @@ namespace ProjectJuice
         [Tooltip("How far each platform can move from its start position, up or down.")]
         public float maxTravel = 3f;
         [Tooltip("Platform speed per unit of load difference. Heavy-vs-empty ≈ 2.5x Bouncy-vs-empty.")]
-        public float moveSpeed = 2f;
+        public float moveSpeed = 4.5f;
         [Tooltip("Hard cap on platform speed so Heavy can never break the level.")]
-        public float maxSpeed = 6f;
+        public float maxSpeed = 10f;
         [Tooltip("How fast velocity chases the target (higher = snappier, lower = floatier).")]
         public float damping = 4f;
         [Tooltip("Distance before each travel limit over which the platforms ease to a stop instead of halting dead (units). 0 = hard stop.")]
@@ -61,6 +61,16 @@ namespace ProjectJuice
         [Tooltip("Spin the wheel visual. 0 = keep it still.")]
         public float wheelRadius = 0.6f;
 
+        [Header("Juice")]
+        [Tooltip("Platform squash when the worm lands on it (0.25 = 25%, more for harder landings).")]
+        [Range(0f, 0.6f)] public float landingSquash = 0.25f;
+        [Tooltip("Speed (units/s) a platform must have when it reaches the end of its travel to clunk (shake, dust, sound).")]
+        public float clunkFromSpeed = 1.5f;
+        [Tooltip("Bounce back at the end of the travel: share of the speed sent back (0 = stops dead).")]
+        [Range(0f, 0.6f)] public float endBounce = 0.25f;
+        [Tooltip("Camera shake of the clunk at full speed (units).")]
+        public float clunkShake = 0.12f;
+
         float travel;   // >0: A down, B up
         float velocity;
         float returnTarget;
@@ -70,6 +80,11 @@ namespace ProjectJuice
         bool initialised;
         float wheelBaseAngle;
         WormController subscribedWorm;
+        float lastCreak = -99f;
+        float peakSpeed;
+        float prevSpeed;
+        bool wasAtEnd;
+        float lastClunk = -99f;
 
         public float Travel { get { return travel; } }
 
@@ -125,6 +140,11 @@ namespace ProjectJuice
             float kick = hit.impactForce * landingKick / total;
             velocity += p == platformA ? kick : -kick; // A pushed down = positive travel
             velocity = Mathf.Clamp(velocity, -maxSpeed, maxSpeed);
+            float k01 = Mathf.Clamp01(hit.impactForce / 60f);
+            p.Squash(landingSquash * Mathf.Lerp(0.35f, 1f, k01));
+            (p == platformA ? platformB : platformA).Squash(-landingSquash * 0.4f * k01); // the other side jerks up
+            GameAudio.PlayAt("rope_twang", p.transform.position, Mathf.Lerp(0.35f, 0.9f, k01), Mathf.Lerp(1.15f, 0.85f, k01));
+            Creak(Mathf.Abs(velocity));
         }
 
         void FixedUpdate()
@@ -170,12 +190,44 @@ namespace ProjectJuice
                 float cap = Mathf.Max(0.05f, room / endEase) * maxSpeed;
                 velocity = Mathf.Clamp(velocity, -cap, cap);
             }
+            float before = velocity;
+            peakSpeed = Mathf.Max(peakSpeed, Mathf.Abs(velocity));
             travel = Mathf.Clamp(travel + velocity * dt, -maxTravel, maxTravel);
-            if ((travel == maxTravel && velocity > 0f) || (travel == -maxTravel && velocity < 0f))
-                velocity = 0f;
+            bool atEnd = (travel == maxTravel && velocity > 0f) || (travel == -maxTravel && velocity < 0f);
+            if (atEnd)
+            {
+                // Arriving at the end after a fast run: clunk once (End Ease may have slowed the last bit, so use the run's top speed).
+                if (!wasAtEnd && peakSpeed >= clunkFromSpeed) Clunk(peakSpeed);
+                peakSpeed = 0f;
+                velocity = Mathf.Abs(before) >= clunkFromSpeed ? -before * endBounce : 0f; // only a real slam bounces back
+            }
+            wasAtEnd = Mathf.Abs(travel) >= maxTravel - 0.01f;
+            if (Mathf.Abs(velocity) > 1f && prevSpeed <= 1f) Creak(Mathf.Abs(velocity)); // starts moving
+            prevSpeed = Mathf.Abs(velocity);
 
             platformA.MoveTo(new Vector2(restA.x, restA.y - travel));
             platformB.MoveTo(new Vector2(restB.x, restB.y + travel));
+        }
+
+        void Clunk(float speed)
+        {
+            if (Time.time - lastClunk < 0.3f) return;
+            lastClunk = Time.time;
+            float k = Mathf.Clamp01(speed / Mathf.Max(0.1f, maxSpeed));
+            GameJuice.Shake(clunkShake * k);
+            platformA.Squash(0.15f * k);
+            platformB.Squash(0.15f * k);
+            Vector2 low = travel > 0f ? (Vector2)platformA.transform.position : (Vector2)platformB.transform.position;
+            GameJuice.Puff(low, Vector2.up, 6, 0.9f);
+            GameAudio.PlayAt("pulley_clunk", low, Mathf.Lerp(0.4f, 1f, k));
+        }
+
+        void Creak(float speed)
+        {
+            if (Time.time - lastCreak < 0.6f) return;
+            lastCreak = Time.time;
+            Vector2 at = wheel != null ? (Vector2)wheel.position : (Vector2)transform.position;
+            GameAudio.PlayAt("pulley_creak", at, Mathf.Clamp(0.25f + speed * 0.08f, 0.25f, 0.7f), Mathf.Clamp(0.85f + speed * 0.04f, 0.85f, 1.3f));
         }
 
         void LateUpdate()

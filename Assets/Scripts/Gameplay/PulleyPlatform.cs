@@ -18,6 +18,11 @@ namespace ProjectJuice
         public SurfaceType surfaceType = SurfaceType.Metal;
 
         Rigidbody2D body;
+        Transform visual;      // copy of the sprite, squashed for juice (the collider never changes)
+        Vector3 visualScale;
+        float squash;          // >0 squashed down, <0 stretched up
+        float squashVel;
+        float visualHeight;
 
         /// <summary>Worm standing on this platform right now (null if none).</summary>
         public WormController Rider { get; private set; }
@@ -30,6 +35,47 @@ namespace ProjectJuice
             if (s == null) { s = gameObject.AddComponent<Surface>(); s.type = surfaceType; s.ApplyMaterial(); }
             BoxCollider2D col = GetComponent<BoxCollider2D>();
             if (col.isTrigger) Debug.LogWarning("[PulleyPlatform] " + name + " is a trigger: the worm cannot stand on it.", this);
+            SpriteRenderer sr = GetComponent<SpriteRenderer>();
+            if (sr != null && sr.sprite != null)
+            {
+                GameObject v = new GameObject("Visual (squash)");
+                v.layer = gameObject.layer;
+                v.transform.SetParent(transform, false);
+                SpriteRenderer vr = v.AddComponent<SpriteRenderer>();
+                vr.sprite = sr.sprite;
+                vr.color = sr.color;
+                vr.flipX = sr.flipX;
+                vr.flipY = sr.flipY;
+                vr.sortingLayerID = sr.sortingLayerID;
+                vr.sortingOrder = sr.sortingOrder;
+                vr.sharedMaterial = sr.sharedMaterial;
+                sr.enabled = false;
+                visual = v.transform;
+                visualScale = Vector3.one;
+                visualHeight = sr.sprite.bounds.size.y;
+            }
+        }
+
+        /// <summary>Kick the squash spring (amount > 0 squashes, < 0 stretches). Purely visual.</summary>
+        public void Squash(float amount)
+        {
+            if (visual == null) return;
+            squash = Mathf.Clamp(squash + amount, -0.5f, 0.6f);
+        }
+
+        void LateUpdate()
+        {
+            if (visual == null) return;
+            // Damped spring back to rest: squash, overshoot a little, settle.
+            float dt = Time.deltaTime;
+            squashVel += (-squash * 260f - squashVel * 16f) * dt;
+            squash += squashVel * dt;
+            if (Mathf.Abs(squash) < 0.0005f && Mathf.Abs(squashVel) < 0.005f) { squash = 0f; squashVel = 0f; }
+            float sy = 1f - squash;
+            float sx = 1f + squash * 0.5f;
+            visual.localScale = new Vector3(visualScale.x * sx, visualScale.y * sy, 1f);
+            // Keep the top edge where the worm stands: the platform squashes upward from its bottom.
+            visual.localPosition = new Vector3(0f, visualHeight * 0.5f * (1f - sy), 0f);
         }
 
         void EnsureBody()

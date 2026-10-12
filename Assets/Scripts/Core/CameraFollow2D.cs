@@ -135,10 +135,12 @@ namespace ProjectJuice
             transform.position = new Vector3(next.x, next.y, transform.position.z) + (Vector3)ShakeOffset(dt);
         }
 
-        /// <summary>Add a shake (amount = largest offset in world units). Shakes add up and fade out.</summary>
+        /// <summary>Add a shake (amount = largest offset in world units). A new shake takes over a weaker one
+        /// and only adds a little on top, so many hits in a row never build up into an earthquake.</summary>
         public static void AddShake(float amount)
         {
-            trauma = Mathf.Min(trauma + Mathf.Max(0f, amount), 1.5f);
+            amount = Mathf.Max(0f, amount);
+            trauma = Mathf.Min(Mathf.Max(trauma, amount) + amount * 0.25f, 0.6f);
         }
 
         Vector2 ShakeOffset(float dt)

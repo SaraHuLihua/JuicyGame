@@ -101,6 +101,11 @@ namespace ProjectJuice
                 Vector2 vel = (dir * UnityEngine.Random.Range(2f, 7f)) + UnityEngine.Random.insideUnitCircle * UnityEngine.Random.Range(1f, 5f);
                 SimpleDebris.Spawn(pos, vel, shardColor, UnityEngine.Random.Range(0.12f, 0.3f), UnityEngine.Random.Range(0.6f, 1.2f));
             }
+            if (GetComponent<BreakableChain>() == null) // chains play their own snap
+            {
+                GameAudio.PlayAt("break", hit.point, Mathf.Clamp(0.55f + hit.impactForce / 120f, 0.55f, 1f));
+                GameJuice.Shake(0.12f);
+            }
             if (Broken != null) Broken(hit);                     // physical reaction of composite objects first
             if (breakVfx != null) breakVfx.Play(hit.point, dir); // visual only, after the physical change
             onBroken.Invoke();

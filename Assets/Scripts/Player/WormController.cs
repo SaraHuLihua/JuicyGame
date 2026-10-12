@@ -37,6 +37,9 @@ namespace ProjectJuice
         public Vector2 RespawnPosition { get { return HasCheckpoint ? CheckpointPosition : LastLandingPosition; } }
         public bool inputLocked;
         public bool IsDead { get; private set; }
+        /// <summary>Seconds after a death before coming back at the checkpoint (set by the Checkpoint). 0 = only with R.</summary>
+        [HideInInspector] public float checkpointRespawnDelay = 1f;
+        float deadTimer;
 
         public event Action<WormMaterial> MaterialChanged;
         public event Action<Vector2> Landed;
@@ -52,6 +55,8 @@ namespace ProjectJuice
             launcher = GetComponent<WormLauncher>();
             counter = GetComponent<LaunchCounter>();
             GameJuice.Ensure();
+            GameAudio.Ensure();
+            LevelFlow.Ensure();
             physics.SetMaterial(startMaterial);
             LastLandingPosition = transform.position;
 
@@ -66,7 +71,8 @@ namespace ProjectJuice
 
         void Update()
         {
-            if (inputLocked || IsDead) return;
+            if (IsDead) { UpdateDead(); return; }
+            if (inputLocked) return;
 
             bool rightClickSwitch = GameInput.RightDown && !launcher.IsAiming && !launcher.CancelledThisFrame;
             if (GameInput.SwitchDown || rightClickSwitch) ChangeMaterial();
@@ -87,6 +93,7 @@ namespace ProjectJuice
             if (IsDead || inputLocked) return false;
             if (m == physics.Material) return false;
             physics.SetMaterial(m);
+            GameAudio.Play(m == WormMaterial.Heavy ? "switch_heavy" : "switch_squishy", 0.6f);
             if (MaterialChanged != null) MaterialChanged(m);
             return true;
         }
@@ -98,29 +105,46 @@ namespace ProjectJuice
             if (IsDead || !CanLaunch) return false;            // no mid-air relaunch, no launch while dead
             physics.Launch(direction, power01, forceMultiplier);
             counter.Increment();
+            GameAudio.Play("launch", Mathf.Lerp(0.45f, 0.9f, power01), Mathf.Lerp(0.9f, 1.15f, power01));
             if (Launched != null) Launched(transform.position, power01);
             return true;
         }
 
         // ------------------------------------------------------------------ respawn / reset
 
-        /// <summary>Proper death: plays Death anim, blocks input/launch/switch until respawn. Call RespawnAtLastLanding() later.</summary>
+        /// <summary>
+        /// Death: plays the Death anim and blocks input. After LevelSettings Death Delay the worm comes back at the
+        /// checkpoint if one was reached, otherwise the whole level restarts from the start (LevelFlow).
+        /// </summary>
         public void Die(string reason)
         {
-            if (IsDead) return;
+            if (IsDead || LevelFlow.IsComplete) return;
             IsDead = true;
+            deadTimer = 0f;
+            GameAudio.Play("death", 0.8f);
+            GameJuice.Shake(0.12f);
             if (Died != null) Died(reason);
         }
 
-        /// <summary>Hazards call this (rollers crushing, falling out of the world, ...). Costs nothing extra: the launch was already counted.</summary>
+        /// <summary>Same as Die (kept for older hazards: rollers, falling out of the world).</summary>
         public void Kill(string reason)
         {
-            // Legacy instant-respawn behaviour used by existing hazards/tests.
-            // Fires Died so the Death anim can flash, then immediately revives at last landing.
-            if (!IsDead) Die(reason);
-            physics.Teleport(RespawnPosition);
-            IsDead = false;
-            if (Revived != null) Revived();
+            Die(reason);
+        }
+
+        void UpdateDead()
+        {
+            LevelSettings s = LevelSettings.Current;
+            deadTimer += Time.deltaTime;
+            if (HasCheckpoint)
+            {
+                if (checkpointRespawnDelay > 0f && deadTimer >= checkpointRespawnDelay) RespawnAtLastLanding();
+                return;
+            }
+            float delay = s != null ? s.deathDelay : 0.9f;
+            if (deadTimer < delay) return;
+            if (s == null || s.restartLevelOnDeath) { deadTimer = float.MinValue; LevelFlow.RestartLevel(); } // runs once
+            else RespawnAtLastLanding();
         }
 
         /// <summary>R key. Dead: back to the checkpoint (or the last landing if none). Alive: back to the last landing.</summary>

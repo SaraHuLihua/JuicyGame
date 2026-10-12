@@ -18,14 +18,16 @@ namespace ProjectJuice
         public bool cameraShake = true;
         [Tooltip("Multiplies every shake (0 = none, 2 = double).")]
         [Min(0f)] public float shakeStrength = 1f;
-        [Tooltip("Impact force (worm mass x speed into the surface) where shaking starts. Rocky landing from a normal jump is about 20-40.")]
-        public float impactShakeFrom = 22f;
+        [Tooltip("Impact force (worm mass x speed into the surface) where shaking starts. Rocky landing from a normal jump is about 20-40, so normal Rocky landings do not shake.")]
+        public float impactShakeFrom = 45f;
         [Tooltip("Impact force that gives the strongest shake.")]
-        public float impactShakeFull = 90f;
+        public float impactShakeFull = 130f;
         [Tooltip("Strongest impact shake (world units).")]
-        public float impactShakeMax = 0.45f;
-        [Tooltip("Shake on a full-power launch (units). Scaled by power and by the worm's mass.")]
-        public float launchShake = 0.08f;
+        public float impactShakeMax = 0.18f;
+        [Tooltip("Shake on a full-power launch (units). Scaled by power (and a little by the worm's mass).")]
+        public float launchShake = 0.04f;
+        [Tooltip("Seconds between two impact shakes (Rocky rolling or bouncing in a corner would otherwise rumble non-stop).")]
+        [Min(0f)] public float impactShakeCooldown = 0.25f;
 
         [Header("Dust")]
         public bool dust = true;
@@ -36,13 +38,14 @@ namespace ProjectJuice
 
         [Header("Hit-stop (freeze frame on very hard hits)")]
         public bool hitStop = true;
-        [Tooltip("Impact force from which the game freezes for a moment (Rocky falling from high up).")]
-        public float hitStopFrom = 80f;
+        [Tooltip("Impact force from which the game freezes for a moment (Rocky falling from very high up).")]
+        public float hitStopFrom = 130f;
         [Tooltip("Real seconds of the freeze.")]
         [Range(0f, 0.2f)] public float hitStopTime = 0.05f;
 
         WormController subscribed;
         bool stopping;
+        float lastImpactShake = -99f;
 
         /// <summary>Called by WormController: makes sure one GameJuice exists.</summary>
         public static void Ensure()
@@ -95,8 +98,11 @@ namespace ProjectJuice
         void OnImpact(ImpactInfo hit)
         {
             float f = hit.impactForce;
-            if (f > impactShakeFrom)
+            if (f > impactShakeFrom && Time.time - lastImpactShake >= impactShakeCooldown)
+            {
+                lastImpactShake = Time.time;
                 Shake(impactShakeMax * Mathf.Clamp01((f - impactShakeFrom) / Mathf.Max(1f, impactShakeFull - impactShakeFrom)));
+            }
             if (hit.normalSpeed > dustFromSpeed)
                 Puff(hit.point, hit.normal, Mathf.RoundToInt(Mathf.Lerp(3f, maxDustPuffs, Mathf.Clamp01(hit.normalSpeed / 40f))), 1f);
             if (hitStop && f >= hitStopFrom) HitStop(hitStopTime);
@@ -106,7 +112,7 @@ namespace ProjectJuice
         {
             if (subscribed == null || subscribed.Physics == null) return;
             float mass = subscribed.Physics.Mass;
-            Shake(launchShake * power01 * Mathf.Clamp(mass, 0.3f, 2.5f));
+            Shake(launchShake * power01 * Mathf.Sqrt(Mathf.Clamp(mass, 0.3f, 2.5f)));
             float r = subscribed.Physics.Collider != null ? subscribed.Physics.Collider.radius : 0.4f;
             Puff(pos + Vector2.down * r, Vector2.up, Mathf.RoundToInt(Mathf.Lerp(2f, maxDustPuffs * 0.6f, power01)), 0.8f);
         }

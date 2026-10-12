@@ -8,7 +8,8 @@ namespace ProjectJuice
     /// The worm touching it (any material) lights it up: from then on every death sends the worm back here
     /// instead of to its last landing. Touching another checkpoint moves the respawn there and turns this one off.
     /// After a death (hazard, crushed by a gear...) the worm comes back here by itself after Auto Respawn After
-    /// seconds; R still works straight away. T (area reset) clears it.
+    /// seconds (WormController counts it); R still works straight away. Without a checkpoint a death restarts the level.
+    /// T (area reset) clears it.
     /// The trigger is the BoxCollider2D on this object; the flag is never solid.
     /// </summary>
     [DisallowMultipleComponent]
@@ -41,7 +42,6 @@ namespace ProjectJuice
 
         Vector3 baseScale;
         float popTimer = -1f;
-        float deadTimer;
         AudioSource audioSource;
 
         public bool IsActive { get { return Current == this; } }
@@ -90,12 +90,13 @@ namespace ProjectJuice
             if (Current != null && Current != this) Current.ShowLit(false);
             Current = this;
             w.SetCheckpoint(SpawnPosition);
+            w.checkpointRespawnDelay = autoRespawnAfter;
             ShowLit(true);
             popTimer = 0f;
-            deadTimer = 0f;
             GameJuice.Shake(0.1f);
             if (activateEffect != null) activateEffect.Play(flagRenderer != null ? (Vector2)flagRenderer.bounds.center : (Vector2)transform.position, transform.up);
             if (audioSource != null) audioSource.PlayOneShot(activateSound, activateVolume);
+            else GameAudio.Play("checkpoint", activateVolume);
             onActivated.Invoke();
         }
 
@@ -124,14 +125,7 @@ namespace ProjectJuice
             {
                 Current = null;
                 ShowLit(false);
-                return;
             }
-            if (w.IsDead && autoRespawnAfter > 0f)
-            {
-                deadTimer += Time.deltaTime;
-                if (deadTimer >= autoRespawnAfter) { deadTimer = 0f; w.RespawnAtLastLanding(); }
-            }
-            else deadTimer = 0f;
         }
 
 #if UNITY_EDITOR

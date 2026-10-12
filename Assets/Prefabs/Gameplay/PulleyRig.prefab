@@ -53,8 +53,8 @@ MonoBehaviour:
   wheel: {fileID: 9100012}
   rope: {fileID: 9100023}
   maxTravel: 3
-  moveSpeed: 2
-  maxSpeed: 6
+  moveSpeed: 4.5
+  maxSpeed: 10
   damping: 4
   endEase: 0.6
   counterBias: 0
