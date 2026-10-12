@@ -10,6 +10,8 @@ All four systems reuse what was already in the project:
 | Belt drive | the pulley wheel art (`FG_Props_1_52/54/55`), `Surface`, the worm's carrier path (`ISurfaceCarrier`, like `CarrierChain`) | `BeltDrive` |
 | Rotating passage | the `FG_Props_1_1` object in `MechanicsTest`, `Surface`, worm physics | `RotatingChamber` |
 | Camera | `CameraFollow2D` (rewritten, same component) | `CameraZone` (optional) |
+| Fan | the `Fan` object in `MechanicsTest` (`FG_Props_1_10` grille, `FG_Props_1_41` body), worm mass from `WormPhysics` | `FanAirflow`, `Fan.prefab` |
+| Stepping gear | `FG_Props_1_45` in `MechanicsTest` (its own PolygonCollider2D) | `GearStepper` |
 
 > Written without access to the Unity editor. The C# compiles against the Unity API, the prefab and
 > scene YAML was written by hand, and nothing has been tested in Play mode yet. The checklist at the end
@@ -57,12 +59,22 @@ Duplicate it (Ctrl/Cmd+D) as often as you like. Every copy is independent.
 - **Bottom**: `Free` (default) is a normal hanging chain. `PinnedInPlace` fixes the last link where it spawned, so a rotated chain spans between two points. `AttachedToBody` fixes it to **Bottom Body**.
 - **Bottom Slack** (pinned bottom only): the span is this much shorter than the chain, so it hangs in a soft curve instead of a rigid bar. Keep it at 0.04–0.1.
 
+### Fixing the ends to the walls
+1. Move the `Chain` object onto the first wall, exactly where the first ring should be bolted. That point is the top pin.
+2. Create an empty object (right click > Create Empty) and move it onto the other wall. Call it `ChainAnchor_R`, for example.
+3. On `BreakableChain`, set **Bottom** = `PinnedInPlace` and drag that empty object into **Bottom Anchor**.
+4. The chain now aims at the anchor, and **Link Count is worked out from the distance** (span ÷ (1 − Bottom Slack) ÷ Link Length), so you don't need to rotate or scale anything. Raise **Bottom Slack** for a deeper U, lower it for a tighter chain. The Edit-mode preview follows when you move either end.
+5. Each pinned end gets a bolted **wall plate** (Header *Wall plates*): **Show Wall Plates**, **Wall Plate Sprite** (empty = a round plate with a bolt; drag in any bracket art you like), **Wall Plate Size**, **Wall Plate Color**. The plates are visual only.
+
+Without a Bottom Anchor the old behaviour stays: the far end is pinned where the straight chain ends, pulled in by Bottom Slack.
+
 ### Changing the break point
 - **Break At Link**: the joint above this link breaks. With 12 links, 6 breaks in the middle, 1 just under the top link and 11 above the last link.
 - **Breakable** off gives an unbreakable chain.
 - What breaks it:
-  1. **Worm impact**, through the project's existing `BreakableObject` on the Chain object, with the same rule as brittle seals: impact force = worm mass × speed into the chain. **Break Threshold** is 15 by default, which Rocky reaches easily (15–65) and Bouncy practically never (2–9). **Crack Fraction / Accumulate Damage** work as usual, so two medium hits can snap it. A hit anywhere on the chain counts, and the chain then snaps at its break point.
-  2. **Joint Break Force** on `BreakableChain`: the break joint also snaps on its own when overloaded. Infinity (the default) turns this off.
+  0. **Standing on it heavy** (new): **Break Under Mass** (1.5) on `BreakableChain`. When the worm stands on the chain for **Break Under Mass Delay** (0.25 s) and its mass is at least this value, the chain snaps. Rocky weighs 2.5, so it breaks the chain; Bouncy weighs 0.3, so it can walk on it. Set it to 0 to turn this off. Before this, only a *hit* could break the chain, so switching to Rocky while standing on it did nothing.
+  1. **Worm impact**, through the project's existing `BreakableObject` on the Chain object, with the same rule as brittle seals: impact force = worm mass × speed into the chain. **Break Threshold** is 15 by default, which Rocky reaches easily (15–65) and Bouncy practically never (2–9). **Crack Fraction / Accumulate Damage** work as usual, so two medium hits can snap it. A hit anywhere on the chain counts. With **Break Where Hit** on (default) it snaps at the link that was hit or stood on; off, it always snaps at Break At Link.
+  2. **Joint Break Force** on `BreakableChain`: the break joint also snaps on its own when overloaded. Infinity (the default) turns this off. It's hard to tune because the chain's own weight already pulls on that joint (a lot on a long, tight chain), so use Break Under Mass for "Rocky is too heavy for it".
   3. **Code or UnityEvents**: call `BreakableChain.Break()`, for example from a button, a trigger or another object's `onBroken`.
 - Order on a break: the valid break event, then the joint is removed (lower part free), then the `BreakEffect` plays at the break point, then `onBreak` fires and the snap sound plays, then gravity takes over and the lower part falls, swings, hits walls and clinks.
 - **T** (test reset) re-hangs every chain.
@@ -75,7 +87,8 @@ On `BreakableChain` > **Physics**:
 - **Angular Damping** (1.5): kills wiggle and jitter. Raise it if the chain looks nervous.
 - **Surface Type** (Metal): how the worm bounces off or lands on the chain.
 - **Link Layer**: the physics layer of the links (-1 uses the Chain object's layer). Links collide with whatever that layer collides with in *Project Settings > Physics 2D > Layer Collision Matrix*. Everything in the project is currently on `Default`, so chains hit all level geometry.
-- **Link Width**: collision thickness.
+- **Collider Matches Art** (new, on by default): the collision thickness follows the drawn rings (Art Scale included), times **Art Collider Fill** (0.85). This fixes the worm **floating** above the chain. In `MechanicsTest` the chain had Link Width 1.02 and Scale 4.48, so each link was 4.6 units thick while the rings are drawn about 1.8 units tall, and the worm rested on an invisible capsule well above the art. Lower Art Collider Fill if the worm still looks a little high, raise it if it sinks into the rings.
+- **Link Width**: collision thickness, used only when Collider Matches Art is off or the chain has no art.
 
 ### Changing the look
 - **Ring Sprites / Bar Sprites**: swap or add variants. Leave Bar Sprites empty to get rings on every link.
@@ -142,6 +155,14 @@ On `PulleyRig > PulleySystem`:
 - **Damping**: how quickly the speed follows the target. Higher is snappier, lower is floatier.
 - **End Ease** (0.6, new): the platforms slow down over this distance before the travel limit instead of stopping dead. This used to be a hard stop.
 - **Auto Return / Rest Offset**: with nobody on it, the rig eases back to this position.
+- **Sink Per Weight** (new, 0 = off): 0 is the original counterweight, where a rider keeps the platform moving until Max Travel. Above 0 it works like a scale: the platform sinks this many units per unit of extra load and stops there (Bouncy sinks 0.3 × this, Rocky 2.5 × this).
+
+#### Why the platform only comes back up a little after a Bouncy jump
+The rig only returns **while nobody stands on it**, so it only has the time you spend in the air. With the values in `MechanicsTest` (Max Travel 16 and 10.7, Max Speed 6), a platform that has sunk far needs about 2 to 3 seconds to come all the way back, while a Bouncy jump keeps you in the air for roughly 0.5 to 2 seconds depending on power. It rises part of the way, then you land and it stops (or sinks again). These new fields, under *Rest behaviour*, control the return:
+- **Return Strength** (4): how hard it's pulled back. Higher gets back sooner, and it never bounces past the rest position.
+- **Return Speed** (0 = Max Speed): top speed while returning. With a big Max Travel this is usually the real limit, so raise it (for example 12–15) if you want it back within one jump.
+- **Return Amount** (1): how much of the way back it goes each time you leave it. 1 is all the way, 0.5 is halfway, 0 is stays where it was left, like a real balanced pulley. This is the value to tune if you want a less "magic" return.
+- You can also lower **Max Travel**, so it can't sink so far in the first place, or use **Sink Per Weight**.
 - **Counter Bias**: permanent extra weight on side B.
 - **Wheel Radius**: used for the wheel spin and the rope wrap.
 - Move `PlatformA` / `PlatformB` in the Scene view to set where they start. The positions are captured at Play.
@@ -234,6 +255,8 @@ Same component, under **Follow**:
 ---
 
 ## 5. Quality pass: what was found and fixed
+- **Chain: worm floating above it**: the link colliders were much thicker than the drawn rings (see *Collider Matches Art*).
+- **Chain: Rocky standing on it didn't break it**: only impacts counted. Added *Break Under Mass*.
 - **Rope visually lagging and disconnecting**: it was updated in FixedUpdate while the platforms are interpolated. It now updates in LateUpdate from the interpolated positions. The wheel spin is computed the same way (smooth, no drift).
 - **Pulley platforms snapping** at the travel limit (hard stop): they now ease out (`End Ease`).
 - **Rotating chamber trapping the worm**: the collider was teleported by an Animation and traced every hair spike, with a stray second piece. It is now a kinematic body with a clean collider and an opening.
@@ -292,3 +315,54 @@ Don't scale the root or the wheels with the Scale tool to resize a wheel: change
 2. Land on the top run as Bouncy and as Rocky: you should be carried right and dropped off past the large wheel. If Rocky doesn't move, raise **Heavy Grip**.
 3. If the belt sits a little off the wheel art, adjust that wheel's **Radius**.
 
+---
+
+## 8. Fan (blows upward)
+
+### Where it is
+- Prefab: **`Assets/Prefabs/Gameplay/Fan.prefab`**: `Fan (FanAirflow + BoxCollider2D + Surface)` > `Housing` > `FG_Props_1_10` ×3 (grille), `FG_Props_1_41` (body).
+- The `Fan` object in `MechanicsTest` is now an instance of this prefab, in the same place.
+- Script: `Scripts/Gameplay/FanAirflow.cs`.
+
+### How it works
+- Above the grille there is an invisible **air column**. While the worm is inside it, the fan pushes it with an upward **force**, the same force whatever the material. Like everything else in the project, the worm's real mass decides the result (there is no "if Squishy"):
+  - **Bouncy/Squishy** (mass 0.3) gets 8× more acceleration than Rocky. It rises, and because the force fades towards the top of the column, it stops at the height where the air exactly carries its weight and **floats** there, bobbing gently.
+  - **Rocky/Heavy** (mass 2.5, falls 1.6× faster) is barely slowed and **stays down**.
+  - Switching material mid-air works: switch to Rocky to drop out of the air, and back to Bouncy to be picked up again.
+- The body of the fan is solid (BoxCollider2D, Metal), so you can stand on it as Rocky.
+- Visuals (never touch physics): soft air streaks rise from the grille, wave and fade out at the top, and the housing vibrates a little while the fan runs.
+- Select the Fan to see the column (cyan box) and **the height where Bouncy will float (green line)**.
+
+### Inspector settings (`FanAirflow`)
+- **Air column**: **Outlet Center** (middle of the grille, local), **Column Width**, **Column Height**. The air blows along the object's local up, so rotating the Fan makes a sideways fan.
+- **Lift**:
+  - **Running**, plus `StartFan()`, `StopFan()`, `ToggleFan()` for UnityEvents and buttons.
+  - **Lift Force** (20): higher makes Bouncy float higher. Bouncy needs more than about 8 to lift off, and Rocky would need more than about 150, so anything in between keeps the "Bouncy floats, Rocky stays" rule.
+  - **Top Strength** (0): the share of the force left at the top. 0 makes Bouncy float inside the column. 1 means no fading, so Bouncy shoots out of the top, which is good for a launch fan.
+  - **Air Drag** (1.2): calms the bobbing. **Centering** (0.6): keeps a floating worm from drifting out of the side. **Flutter / Flutter Speed**: the gentle bobbing. **Spin Up Time**: soft start and stop.
+- **Air VFX**: **Show Air**, **Streak Count**, **Streak Speed**, **Streak Length / Width** (min, max), **Air Color** (alpha = transparency), **Wobble**, **Streak Sprite** (optional), **Sorting Order**.
+- **Housing shake**: **Shake Target** (the `Housing` child; never the object that holds the collider), **Shake Amount**.
+- **Events**: **On Started**, **On Stopped** (for a sound, for example).
+
+## 9. Stepping gear — `FG_Props_1_45`
+
+### Where it is
+- Scene **`MechanicsTest`** > **`FG_Props_1_45`** (the 10-tooth gear at x 54, y −68). It now has a kinematic `Rigidbody2D` and `GearStepper`. Its own PolygonCollider2D is kept.
+- Script: `Scripts/Gameplay/GearStepper.cs`. Add it to any other object to make it click the same way (it adds the Rigidbody2D itself).
+
+### How it works
+It turns **clockwise in clicks**: a quick turn of one tooth, a small overshoot that settles back (the mechanical "clunk"), then a pause. It's turned like the rotating chamber, by physics (MoveRotation on a kinematic body), so a worm standing on a tooth is carried along instead of glitching through.
+
+### Inspector settings (`GearStepper`)
+- **Direction** (Clockwise).
+- **Step Angle** (36): degrees per click. 360 ÷ number of teeth gives one tooth per click (10 teeth = 36). Use 18 for half a tooth.
+- **Step Duration** (0.15 s): how fast each click turns. **Pause Between Steps** (0.6 s): the wait between clicks.
+- **Overshoot** (0.08) / **Settle Time** (0.1 s): the clunk. 0 gives a dry, exact stop.
+- **Start Automatically**, **Start Delay**, and `StartTurning()`, `StopTurning()`, `ToggleTurning()` for UnityEvents.
+- **Click Sound** / **Click Volume** (optional), and **On Step**, fired on every click (sound, particles, or to drive another mechanism).
+
+## 10. First things to check in Play mode (fan, gear, chain, pulley; not verified here)
+1. Fan: walk into the air as Bouncy. You should rise and float near the green line. As Rocky you should stay on the ground. If Bouncy floats too high or too low, change **Lift Force**. If the air streaks are too strong or too faint, change the **Air Color** alpha.
+2. Gear: it clicks clockwise one tooth at a time. If a click looks like more or less than one tooth, adjust **Step Angle**.
+3. Chain: the worm should sit on the rings, not above them. Stand on it as Rocky and it should snap after about a quarter of a second. Bouncy should not break it.
+4. Pulley: sink a platform, then jump as Bouncy. With **Return Speed** 12–15 it should get back during the jump.
