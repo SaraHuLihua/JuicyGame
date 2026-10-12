@@ -17291,6 +17291,91 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!1 &1479800197
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1479800199}
+  - component: {fileID: 1479800198}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1479800198
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1479800197}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da56cd3499aedb649ba03527d15d0457, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectJuice.AudioManager
+  squishyMusic: {fileID: 8300000, guid: 4eeb1ba56fa342246958b5ee4f00fe1a, type: 3}
+  heavyMusic: {fileID: 8300000, guid: 8768a23ab634dd741998ef3e2b5f3209, type: 3}
+  formChangeDelay: 1.5
+  crossfadeDuration: 1
+  squishyVolume: 0.435
+  heavyVolume: 0.419
+  musicMixerGroup: {fileID: 0}
+  launchSfx: {fileID: 8300000, guid: 56672e7fcd57c2045a81c86a8bdfab0d, type: 3}
+  launchSfxVolume: 0.822
+  squishyImpactSfx:
+  - {fileID: 8300000, guid: 5a45f55034dca0e4ea37cecee7b2f7fa, type: 3}
+  heavyImpactSfx:
+  - {fileID: 8300000, guid: fbaaef500ba5b264fa1e058c8d1fb93e, type: 3}
+  landingSfx: []
+  squishyDeathSfx:
+  - {fileID: 8300000, guid: 51a80bb82788ea24abf07524e1d63841, type: 3}
+  heavyDeathSfx:
+  - {fileID: 8300000, guid: ae60fe9bbab0afc4d9949a59ce79be41, type: 3}
+  deathSfx: []
+  respawnSfx: []
+  materialSwitchSfx: {fileID: 8300000, guid: fa5d052c29729884e9cee0f7821a2389, type: 3}
+  rockDestructionSfx:
+  - {fileID: 8300000, guid: b4051d9b86d451546a36ec8e85f3796d, type: 3}
+  squishyImpactVolume: 0.75
+  heavyImpactVolume: 0.205
+  landingVolume: 0.65
+  squishyDeathVolume: 0.85
+  heavyDeathVolume: 0.85
+  deathVolume: 0.843
+  respawnVolume: 0.75
+  materialSwitchVolume: 0.7
+  rockDestructionVolume: 0.9
+  minimumImpactSpeed: 1.2
+  minimumImpactVolumeScale: 0.35
+  fullVolumeImpactSpeed: 12
+  impactCooldown: 0.08
+  landingImpactDeduplicationWindow: 0.2
+  materialChangeImpactSuppression: 0.08
+  sfxPitchVariation: 0.04
+  rockDestructionPitchVariation: 0.05
+  sfxMixerGroup: {fileID: 0}
+--- !u!4 &1479800199
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1479800197}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 186.12584, y: -38.59949, z: -99.10051}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1479964466
 GameObject:
   m_ObjectHideFlags: 0
@@ -27525,3 +27610,4 @@ SceneRoots:
   - {fileID: 929237778}
   - {fileID: 98495231}
   - {fileID: 1139696112}
+  - {fileID: 1479800199}

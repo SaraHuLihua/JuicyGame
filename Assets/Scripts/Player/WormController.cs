@@ -34,6 +34,8 @@ namespace ProjectJuice
         public bool IsDead { get; private set; }
 
         public event Action<WormMaterial> MaterialChanged;
+        /// <summary>Raised only after the player successfully toggles form through ChangeMaterial().</summary>
+        public event Action<WormMaterial> PlayerMaterialSwitched;
         public event Action<Vector2> Landed;
         public event Action<Vector2, float> Launched;   // position, power 0..1
         public event Action<ImpactInfo> Impacted;
@@ -73,7 +75,10 @@ namespace ProjectJuice
         /// <summary>Squishy &lt;-&gt; Heavy. Works ANYTIME, including airborne. Preserves momentum (see WormPhysics.SetMaterial).</summary>
         public bool ChangeMaterial()
         {
-            return SetMaterial(physics.Material == WormMaterial.Squishy ? WormMaterial.Heavy : WormMaterial.Squishy);
+            WormMaterial target = physics.Material == WormMaterial.Squishy ? WormMaterial.Heavy : WormMaterial.Squishy;
+            if (!SetMaterial(target)) return false;
+            if (PlayerMaterialSwitched != null) PlayerMaterialSwitched(target);
+            return true;
         }
 
         public bool SetMaterial(WormMaterial m)
