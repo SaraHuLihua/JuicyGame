@@ -46,6 +46,8 @@ namespace ProjectJuice
             BreakableChain[] chains = FindChains();
             for (int i = 0; i < chains.Length; i++) chains[i].Restore();
 
+            for (int i = 0; i < PushableWheel.All.Count; i++) PushableWheel.All[i].Restore();
+
             CameraFollow2D cam = Camera.main != null ? Camera.main.GetComponent<CameraFollow2D>() : null;
             if (cam != null) cam.Snap();
         }
