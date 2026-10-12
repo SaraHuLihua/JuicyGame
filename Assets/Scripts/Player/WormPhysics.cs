@@ -124,11 +124,14 @@ namespace ProjectJuice
             bool valid = support && ground.ValidLanding;
             Vector2 v = rb.GetVelocity();
 
-            // Surfaces that move the worm (cilia wave, chain).
+            // Surfaces that move the worm (cilia wave, chain, belt).
             Vector2 groundVel = Vector2.zero;
             if (support && ground.Carrier != null)
             {
-                Vector2 target = ground.Carrier.GetCarryVelocity(Material);
+                IPointSurfaceCarrier pointCarrier = ground.Carrier as IPointSurfaceCarrier;
+                Vector2 target = pointCarrier != null
+                    ? pointCarrier.GetCarryVelocityAt(Material, ground.Point)
+                    : ground.Carrier.GetCarryVelocity(Material);
                 float accel = ground.Carrier.GetCarryAcceleration(Material);
                 float targetSpeed = target.magnitude;
                 if (targetSpeed > 0.001f && accel > 0f)
