@@ -120,18 +120,20 @@ namespace ProjectJuice
 
         [Header("Break strength (harder hit = more damage)")]
         [Tooltip("Impact force (worm mass x fall speed: Rocky falling at 20 u/s = 50) needed for each EXTRA snap after the first. " +
-                 "Lower = shatters into more pieces. 0 = always a single snap.")]
-        [Min(0f)] public float forcePerExtraBreak = 18f;
-        [Tooltip("Most joints one hit can snap.")]
-        [Min(1)] public int maxBreaks = 5;
+                 "Lower = shatters into more pieces. 0 = always a single snap (default: the chain splits in two halves that hang from the walls).")]
+        [Min(0f)] public float forcePerExtraBreak = 0f;
+        [Tooltip("Most joints one hit can snap. 1 = it only ever breaks in one point.")]
+        [Min(1)] public int maxBreaks = 1;
         [Tooltip("Links between two snaps of the same hit.")]
         [Min(1)] public int breakSpacing = 3;
         [Tooltip("Kick given to the links near the hit, per unit of impact force (impulse). 0 = they just fall.")]
-        [Min(0f)] public float impactPush = 0.012f;
+        [Min(0f)] public float impactPush = 0.004f;
         [Tooltip("How many links around the hit get kicked.")]
         [Min(0)] public int pushRadius = 6;
         [Tooltip("Break VFX size grows with the hit: Effect Scale x (1 + extra snaps x this).")]
         [Min(0f)] public float effectGrowth = 0.35f;
+        [Tooltip("Once broken, the hanging halves no longer collide with the worm, so they never block it or land on it.")]
+        public bool brokenIgnoresWorm = true;
 
         [Header("Break VFX (optional, purely visual)")]
         [Tooltip("Played exactly at the break point. Leave empty for no effect, or use the one on this prefab.")]
@@ -596,6 +598,7 @@ namespace ProjectJuice
             }
             weightTimer = 0f;
             Disturb();
+            if (brokenIgnoresWorm) IgnoreWorm(true);
             for (int i = 0; i < links.Count; i++)
                 if (links[i] != null)
                 {
@@ -623,6 +626,7 @@ namespace ProjectJuice
                 for (int i = 0; i < extraPoints.Count; i++) breakEffect.Play(extraPoints[i], dir);
             }
             GameJuice.Shake(0.12f + 0.08f * breaks);
+            GameAudio.PlayAt("chain_snap", at, 0.9f);
             if (Broke != null) Broke(at);
             onBreak.Invoke();
         }
@@ -671,8 +675,25 @@ namespace ProjectJuice
             }
             weightTimer = 0f;
             Disturb();
+            IgnoreWorm(false);
             IsBroken = false;
             if (breakableObject != null && breakableObject.IsBroken) breakableObject.Restore();
+        }
+
+        Collider2D ignoredWorm;
+
+        void IgnoreWorm(bool ignore)
+        {
+            WormController w = WormController.Instance;
+            Collider2D wc = ignore ? (w != null && w.Physics != null ? (Collider2D)w.Physics.Collider : null) : ignoredWorm;
+            if (wc == null) return;
+            for (int i = 0; i < links.Count; i++)
+            {
+                if (links[i] == null) continue;
+                Collider2D lc = links[i].GetComponent<Collider2D>();
+                if (lc != null) Physics2D.IgnoreCollision(wc, lc, ignore);
+            }
+            ignoredWorm = ignore ? wc : null;
         }
 
         void OnDestroy()

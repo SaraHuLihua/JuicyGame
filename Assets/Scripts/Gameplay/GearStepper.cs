@@ -202,6 +202,7 @@ namespace ProjectJuice
                 if (c != null && c.attachedRigidbody != null && c.attachedRigidbody != body) c.attachedRigidbody.WakeUp();
             }
             if (audioSource != null) audioSource.PlayOneShot(clickSound, clickVolume);
+            else GameAudio.PlayAt("gear_click", body.position, clickVolume * 0.6f);
             onStep.Invoke();
         }
 

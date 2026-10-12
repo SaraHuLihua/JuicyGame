@@ -31,8 +31,8 @@ namespace ProjectJuice
         [Header("Lift")]
         [Tooltip("Off = the fan is stopped. Can be switched from UnityEvents with StartFan() / StopFan() / ToggleFan().")]
         public bool running = true;
-        [Tooltip("Upward force at the grille, the same for every material. Acceleration = force / worm mass. Squishy weighs 0.3 x 26.25 = 7.9, Heavy 2.5 x 60 = 150: anything between ~8 and ~150 lifts Squishy and not Heavy. Higher = Squishy floats higher.")]
-        public float liftForce = 20f;
+        [Tooltip("Upward force at the grille, the same for every material. Acceleration = force / worm mass. Squishy weighs 0.3 x 41.25 = 12.4, Heavy 2.5 x 60 = 150: anything between ~13 and ~150 lifts Squishy and not Heavy. Higher = Squishy floats higher.")]
+        public float liftForce = 31.5f;
         [Tooltip("Share of the force left at the top of the column (0..1). 0 = fades to nothing, so Squishy floats inside the column. 1 = full force all the way up (Squishy shoots out of the top).")]
         [Range(0f, 1f)] public float topStrength = 0f;
         [Tooltip("Air resistance inside the column (force per unit of speed, divided by mass). Calms Squishy's bobbing a lot, slows Heavy only a little. 0 = none.")]

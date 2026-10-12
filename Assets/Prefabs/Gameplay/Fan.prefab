@@ -111,7 +111,7 @@ MonoBehaviour:
   columnWidth: 5
   columnHeight: 9
   running: 1
-  liftForce: 20
+  liftForce: 31.5
   topStrength: 0
   airDrag: 1.2
   centering: 0.6
