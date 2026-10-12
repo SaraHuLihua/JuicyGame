@@ -515,6 +515,11 @@ It turns **clockwise in clicks**: a quick turn of one tooth, a small overshoot t
 - **Bloom** (`CameraFx` on the Main Camera of MechanicsTest and MainMenu, shader `Assets/Shaders/CameraFx.shader`): the bright parts of the image (white chalk, sparks, the worm's colours) glow softly. **Threshold** (0.75, lower = more glows), **Intensity** (0.7), **Radius** (4), **Tint**. Works with the built-in renderer and in WebGL; the UI is not blurred.
 - **Death turns the screen red** (same `CameraFx`, *Death*): when the worm dies the world drains to red with dark red edges in **Death Fade In** (0.18 s), and the colours come back on respawn (**Death Fade Out** 0.45 s). **Death Color**, **Death Strength**, **Death Vignette**. The UI stays normal.
 
+## 26. Round 13: tap the form buttons (mobile)
+- The **Rocky** and **Squishy** circles and the **space bar** in the bottom-left controls are now buttons: tap (or click) Rocky to become Rocky, Squishy to become Squishy, the space bar to swap. It works in the air too, and the switch plays the same sound and pop as Space. On a phone a second finger can tap a button while the first one aims.
+- A press on those buttons never starts a launch; anywhere else on the screen still aims as before. The tap area is a little larger than the drawing, for fingers.
+- On/off: `Systems` > **LevelSettings** > **Tap Icons To Switch**. The buttons only exist while **Show Controls** is on.
+
 ## 14. First things to check in Play mode (not verified here)
 1. Fan: walk into the air as Bouncy. You should rise and float near the green line. As Rocky you should stay on the ground. If Bouncy floats too high or too low, change **Lift Force**. If the air streaks are too strong or too faint, change the **Air Color** alpha.
 2. Gear: it clicks clockwise one tooth at a time. If a click looks like more or less than one tooth, adjust **Step Angle**.
@@ -552,3 +557,4 @@ It turns **clockwise in clicks**: a quick turn of one tooth, a small overshoot t
 34. Rocky: hit a wall hard and roll fast on a floor. Chips should fly on the hit and gravel trail behind the roll; as Squishy only dust.
 35. Bloom: the chalk lines should glow softly. If the whole image looks washed out, raise **Threshold** on Main Camera > CameraFx.
 36. Die (saw or spikes): the screen should turn red with dark edges, the counter and controls should not; it should clear when you come back.
+37. Tap the Rocky circle (also in the air): you should become Rocky without launching; tap Squishy to go back; tap the space bar to swap. On a phone (WebGL build) the same with your finger.

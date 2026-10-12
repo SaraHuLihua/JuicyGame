@@ -10,6 +10,9 @@ namespace ProjectJuice
     ///  - the space bar above the Rocky circle, the Squishy circle next to it: the material you are now is
     ///    bright and big, the other one darker and smaller; Space pushes the key down and the new material pops.
     /// TutorialZones in the level call ShowHint: the icon the player needs pulses and the rest fades a little.
+    /// The Rocky / Squishy circles and the space bar are also buttons (LevelSettings > Tap Icons To Switch):
+    /// tap or click Rocky to become Rocky, Squishy to become Squishy, the space bar to swap. That is how you switch
+    /// on a phone; a press on them never starts a launch.
     /// Built by LevelFlow, nothing to place.
     /// </summary>
     public class ControlsHud : MonoBehaviour
@@ -30,6 +33,8 @@ namespace ProjectJuice
         Vector2[] lineHome;
         WormMaterial shown;
         bool hasShown;
+        bool tapToSwitch;
+        const float TapPadding = 24f; // extra drawing pixels around each button, for fingers
         float lineShow;
 
         /// <summary>Make the icon for this hint pulse (call it every frame while the hint is wanted).</summary>
@@ -62,6 +67,7 @@ namespace ProjectJuice
         void Make(RectTransform root, LevelSettings s)
         {
             instance = this;
+            tapToSwitch = s.tapIconsToSwitch;
             // Layout in drawing pixels (circles are 138 px): launch circle, then Rocky and Squishy in a row,
             // mouse above the launch circle, space bar above Rocky.
             launch = MakeIcon(root, "Launch", s.launchIcon, new Vector2(75f, 75f));
@@ -110,6 +116,44 @@ namespace ProjectJuice
             if (instance == this) instance = null;
         }
 
+        /// <summary>True when this screen point is on one of the form buttons (the launcher ignores presses there).</summary>
+        public static bool IsOverButton(Vector2 screen)
+        {
+            return instance != null && instance.isActiveAndEnabled && instance.tapToSwitch && instance.ButtonAt(screen) != null;
+        }
+
+        Icon ButtonAt(Vector2 screen)
+        {
+            if (Hit(heavy, screen)) return heavy;
+            if (Hit(squishy, screen)) return squishy;
+            if (Hit(space, screen)) return space;
+            return null;
+        }
+
+        static bool Hit(Icon ic, Vector2 screen)
+        {
+            if (ic == null || !ic.image.enabled) return false;
+            Vector2 local;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(ic.rect, screen, null, out local)) return false;
+            Rect r = ic.rect.rect;
+            return local.x >= r.xMin - TapPadding && local.x <= r.xMax + TapPadding && local.y >= r.yMin - TapPadding && local.y <= r.yMax + TapPadding;
+        }
+
+        void HandleTaps(WormController w)
+        {
+            if (!tapToSwitch) return;
+            System.Collections.Generic.List<Vector2> taps = GameInput.PressesThisFrame();
+            for (int i = 0; i < taps.Count; i++)
+            {
+                Icon b = ButtonAt(taps[i]);
+                if (b == null) continue;
+                b.press = 1f;
+                if (b == space) w.ChangeMaterial();
+                else if ((b == heavy) != (w.Material == WormMaterial.Heavy)) w.ChangeMaterial();
+                return; // one switch per frame
+            }
+        }
+
         static bool Hinting(TutorialHint h) { return Time.unscaledTime < hintUntil[(int)h]; }
 
         void Update()
@@ -119,6 +163,7 @@ namespace ProjectJuice
             WormController w = WormController.Instance;
             if (w == null || w.Physics == null) return;
 
+            HandleTaps(w);
             WormMaterial m = w.Material;
             if (!hasShown) { shown = m; hasShown = true; }
             if (m != shown)

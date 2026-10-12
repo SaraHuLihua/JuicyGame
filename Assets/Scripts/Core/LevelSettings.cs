@@ -56,6 +56,8 @@ namespace ProjectJuice
         public Sprite spaceIcon;
         [Tooltip("Size of the icons (1 = as drawn).")]
         [Range(0.3f, 2f)] public float controlsScale = 0.8f;
+        [Tooltip("Tap or click the Rocky / Squishy circles (or the space bar) to switch form: the way to switch on a phone. A press there never starts a launch.")]
+        public bool tapIconsToSwitch = true;
 
         [Header("Fonts (empty = TextMeshPro default)")]
         [Tooltip("Big title (DarumadropOne-Regular SDF, like the main menu title).")]
