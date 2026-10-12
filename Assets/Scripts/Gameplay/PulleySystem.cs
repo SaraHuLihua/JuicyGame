@@ -44,15 +44,27 @@ namespace ProjectJuice
         [Tooltip("Dip when the worm lands on a platform: platform speed added per unit of impact force (mass x speed), divided by the rig's total load. Rocky lands ~8x harder than Bouncy. 0 = off.")]
         public float landingKick = 0.35f;
 
-        [Header("Rest behaviour")]
-        [Tooltip("With no rider, ease back to restOffset (0 = start positions).")]
+        [Tooltip("0 = a rider keeps the rig moving until Max Travel (a real counterweight). Above 0 = it works like a scale: " +
+                 "the platform sinks Sink Per Weight units per unit of extra load and stops there (Squishy 0.3 -> 0.3 x this, Heavy 2.5 -> 2.5 x this).")]
+        public float sinkPerWeight = 0f;
+
+        [Header("Rest behaviour (nobody on the platforms, e.g. while Squishy is in the air)")]
+        [Tooltip("With no rider, ease back towards restOffset (0 = start positions).")]
         public bool autoReturn = true;
         public float restOffset = 0f;
+        [Tooltip("How much of the way back it goes each time the rider leaves. 1 = all the way to Rest Offset, 0.5 = halfway, 0 = stays where it was left (like a real balanced pulley).")]
+        [Range(0f, 1f)] public float returnAmount = 1f;
+        [Tooltip("How hard it is pulled back, per second. Higher = gets back sooner (it never overshoots). It only moves while nobody stands on it, so a short jump only gives it a short time.")]
+        public float returnStrength = 4f;
+        [Tooltip("Top speed while returning (units/s). 0 = same as Max Speed. With a big Max Travel this is usually what limits how far it gets back during one jump.")]
+        public float returnSpeed = 0f;
         [Tooltip("Spin the wheel visual. 0 = keep it still.")]
         public float wheelRadius = 0.6f;
 
         float travel;   // >0: A down, B up
         float velocity;
+        float returnTarget;
+        bool wasRidden;
         Vector2 restA;
         Vector2 restB;
         bool initialised;
@@ -82,6 +94,7 @@ namespace ProjectJuice
             if (platformA != null) restA = platformA.transform.position;
             if (platformB != null) restB = platformB.transform.position;
             if (wheel != null) wheelBaseAngle = wheel.localEulerAngles.z;
+            returnTarget = restOffset;
             initialised = true;
             Subscribe();
         }
@@ -125,15 +138,30 @@ namespace ProjectJuice
             float loadB = platformB.CurrentLoad(playerWeightMultiplier) + counterBias;
 
             float targetVel;
+            float chase = damping;
             bool anyoneRiding = platformA.HasRider || platformB.HasRider;
             if (anyoneRiding)
-                targetVel = Mathf.Clamp((loadA - loadB) * moveSpeed, -maxSpeed, maxSpeed);
+            {
+                wasRidden = true;
+                if (sinkPerWeight > 0f)
+                    targetVel = Mathf.Clamp((restOffset + (loadA - loadB) * sinkPerWeight - travel) * damping, -maxSpeed, maxSpeed);
+                else
+                    targetVel = Mathf.Clamp((loadA - loadB) * moveSpeed, -maxSpeed, maxSpeed);
+            }
             else if (autoReturn)
-                targetVel = Mathf.Clamp((restOffset - travel) * damping, -maxSpeed, maxSpeed);
+            {
+                // The rider just left: decide how far back this return goes.
+                if (wasRidden) { wasRidden = false; returnTarget = Mathf.Lerp(travel, restOffset, returnAmount); }
+                float strength = Mathf.Max(0.01f, returnStrength);
+                float cap = returnSpeed > 0f ? Mathf.Min(returnSpeed, maxSpeed) : maxSpeed;
+                float goal = returnAmount >= 0.999f ? restOffset : returnTarget;
+                targetVel = Mathf.Clamp((goal - travel) * strength, -cap, cap);
+                chase = Mathf.Max(damping, 4f * strength); // critically damped: gets there without bouncing past
+            }
             else
                 targetVel = 0f;
 
-            float k = 1f - Mathf.Exp(-Mathf.Max(0.01f, damping) * dt);
+            float k = 1f - Mathf.Exp(-Mathf.Max(0.01f, chase) * dt);
             velocity += (targetVel - velocity) * k;
             if (endEase > 0.001f)
             {

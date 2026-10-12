@@ -17,8 +17,11 @@ namespace ProjectJuice
     ///                   decides, same mass x speed rule as every other breakable), or
     ///                 - the joint is overloaded (Joint Break Force), or
     ///                 - any script / UnityEvent calls Break().
+    ///                 - a worm at least Break Under Mass heavy stands on it (Heavy 2.5 yes, Squishy 0.3 no).
     ///   On a break: joint removed -> BreakEffect at the break point -> onBreak -> the lower links fall,
     ///   swing and collide on their own. Sound lives in ChainSounds (listens to LinkImpact / Broke).
+    ///   Wall to wall: Bottom = PinnedInPlace + a Bottom Anchor (empty object on the other wall). Both pinned
+    ///   ends get a small wall plate so the chain reads as bolted to the wall.
     /// Physics never depends on visuals or audio.
     /// </summary>
     [ExecuteAlways]
@@ -32,8 +35,12 @@ namespace ProjectJuice
         [Min(2)] public int linkCount = 12;
         [Tooltip("Distance between two joints (world units). Chain length = Link Count x Link Length.")]
         [Min(0.05f)] public float linkLength = 0.45f;
-        [Tooltip("Collision thickness of each link (world units).")]
+        [Tooltip("Collision thickness of each link (world units). Ignored while Collider Matches Art is on and the chain has art.")]
         [Min(0.02f)] public float linkWidth = 0.3f;
+        [Tooltip("On = the collision thickness follows the drawn rings (Art Scale included), so the worm rests ON the art instead of floating above it.")]
+        public bool colliderMatchesArt = true;
+        [Tooltip("Share of the drawn ring height used as collision thickness (0.85 = the worm sinks a little into the ring outline).")]
+        [Range(0.3f, 1.2f)] public float artColliderFill = 0.85f;
 
         [Header("Ends")]
         [Tooltip("PinnedInPlace: the top hangs from this object's position. AttachedToBody: hangs from Top Body (moves with it). Free: nothing holds it.")]
@@ -44,6 +51,18 @@ namespace ProjectJuice
         public Rigidbody2D bottomBody;
         [Tooltip("Pinned bottom only: how much shorter the span is than the chain (0.06 = 6%), so it hangs in a soft curve instead of a rigid bar.")]
         [Range(0f, 0.4f)] public float bottomSlack = 0.06f;
+        [Tooltip("Pinned bottom only (optional): an empty object placed on the wall. The far end is pinned exactly there, the chain aims at it and " +
+                 "Link Count is worked out from the distance and Bottom Slack. Empty = the far end is where the straight chain ends.")]
+        public Transform bottomAnchor;
+
+        [Header("Wall plates (visual only)")]
+        [Tooltip("Draw a bolted plate at every end pinned in place, so the chain reads as fixed to the wall.")]
+        public bool showWallPlates = true;
+        [Tooltip("Plate sprite. Empty = a round plate with a bolt.")]
+        public Sprite wallPlateSprite;
+        [Tooltip("Plate diameter (world units).")]
+        public float wallPlateSize = 0.6f;
+        public Color wallPlateColor = new Color(0.07f, 0.07f, 0.075f);
 
         [Header("Look (FG_Props_2 rings, alternating face-on ring / side-on bar)")]
         [Tooltip("Face-on rings (FG_Props_2_11, _12, _14). Used on even links. Empty = plain placeholder squares.")]
@@ -76,8 +95,14 @@ namespace ProjectJuice
         public bool breakable = true;
         [Tooltip("The joint ABOVE this link breaks (1 = just under the top link, Link Count - 1 = above the last link).")]
         [Min(1)] public int breakAtLink = 6;
-        [Tooltip("The break joint also snaps on its own above this force (Infinity = only impacts / Break()).")]
+        [Tooltip("The break joint also snaps on its own above this force (Infinity = only impacts / Break()). Hard to tune: the chain's own weight already pulls on it.")]
         public float jointBreakForce = Mathf.Infinity;
+        [Tooltip("Snaps when a worm at least this heavy stands on it (worm mass: Heavy 2.5, Squishy 0.3). 0 = off.")]
+        [Min(0f)] public float breakUnderMass = 1.5f;
+        [Tooltip("Seconds the heavy worm must stand on the chain before it snaps.")]
+        [Min(0f)] public float breakUnderMassDelay = 0.25f;
+        [Tooltip("On = it snaps at the link the worm hits or stands on. Off = always at Break At Link.")]
+        public bool breakWhereHit = true;
 
         [Header("Break VFX (optional, purely visual)")]
         [Tooltip("Played exactly at the break point. Leave empty for no effect, or use the one on this prefab.")]
@@ -97,7 +122,10 @@ namespace ProjectJuice
         readonly List<Rigidbody2D> links = new List<Rigidbody2D>();
         readonly List<Vector3> spawnPos = new List<Vector3>();
         readonly List<float> spawnRot = new List<float>();
+        readonly List<HingeJoint2D> prevJoints = new List<HingeJoint2D>(); // joint of link i to link i-1 (or the top pin)
         HingeJoint2D breakJoint;
+        int breakIndex;
+        float weightTimer;
         BreakableObject breakableObject;
         bool built;
         int builtCount;
@@ -109,19 +137,58 @@ namespace ProjectJuice
         {
             get
             {
-                int b = ClampedBreakIndex(built ? builtCount : PreviewCount());
+                int b = built ? breakIndex : ClampedBreakIndex(PreviewCount());
                 if (built && b < links.Count && links[b] != null)
                     return links[b].transform.TransformPoint(new Vector3(0f, builtLinkLength * 0.5f, 0f));
-                return transform.TransformPoint(new Vector3(0f, -PreviewLinkLength() * b, 0f));
+                return (Vector2)transform.position + ChainDirection() * PreviewLinkLength() * b;
             }
         }
 
         int ClampedBreakIndex(int count) { return Mathf.Clamp(breakAtLink, 1, Mathf.Max(1, count - 1)); }
 
+        bool UsesAnchor { get { return bottom == EndMode.PinnedInPlace && bottomAnchor != null; } }
+
         // Transform Scale is turned into link count / thickness instead of distorting the bodies.
-        int PreviewCount() { return Mathf.Max(2, Mathf.RoundToInt(linkCount * Mathf.Abs(transform.lossyScale.y))); }
+        // With a Bottom Anchor the count comes from the distance instead: chain length = span / (1 - slack).
+        int PreviewCount()
+        {
+            if (UsesAnchor)
+            {
+                float span = Vector2.Distance(transform.position, bottomAnchor.position);
+                return Mathf.Max(2, Mathf.CeilToInt(span / Mathf.Max(0.05f, 1f - bottomSlack) / Mathf.Max(0.05f, linkLength)));
+            }
+            return Mathf.Max(2, Mathf.RoundToInt(linkCount * Mathf.Abs(transform.lossyScale.y)));
+        }
         float PreviewLinkLength() { return linkLength; }
-        float PreviewWidth() { return linkWidth * Mathf.Max(0.01f, Mathf.Abs(transform.lossyScale.x)); }
+        float PreviewWidth()
+        {
+            float art = colliderMatchesArt ? ArtThickness() : 0f;
+            if (art > 0f) return Mathf.Max(0.02f, art * artColliderFill);
+            return linkWidth * Mathf.Max(0.01f, Mathf.Abs(transform.lossyScale.x));
+        }
+
+        /// <summary>World direction the chain hangs in from the top: towards the Bottom Anchor, else this object's local down.</summary>
+        Vector2 ChainDirection()
+        {
+            if (UsesAnchor)
+            {
+                Vector2 d = (Vector2)bottomAnchor.position - (Vector2)transform.position;
+                if (d.sqrMagnitude > 0.0001f) return d.normalized;
+            }
+            return transform.rotation * Vector3.down;
+        }
+
+        /// <summary>Drawn height of the thickest ring across the chain (world units), 0 when there is no art.</summary>
+        float ArtThickness()
+        {
+            Sprite[] set = ringSprites != null && ringSprites.Length > 0 ? ringSprites : barSprites;
+            if (set == null) return 0f;
+            float best = 0f;
+            for (int i = 0; i < set.Length; i++)
+                if (set[i] != null)
+                    best = Mathf.Max(best, set[i].rect.height / Mathf.Max(1f, set[i].pixelsPerUnit) * ArtScale(set[i])); // drawn turned 90 degrees: height = across
+            return best;
+        }
 
         // ------------------------------------------------------------------ build
 
@@ -150,14 +217,17 @@ namespace ProjectJuice
             int layer = linkLayer >= 0 ? linkLayer : gameObject.layer;
             List<Collider2D> cols = new List<Collider2D>();
             Rigidbody2D prev = null;
+            Vector2 topWorld = transform.position;
+            Vector2 dir = ChainDirection();
+            Quaternion linkRot = Quaternion.Euler(0f, 0f, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg + 90f); // link local down = dir
 
             for (int i = 0; i < builtCount; i++)
             {
                 GameObject go = new GameObject("Link" + i);
                 go.layer = layer;
                 go.transform.SetParent(transform, false);
-                go.transform.localPosition = new Vector3(0f, -builtLinkLength * (i + 0.5f), 0f);
-                go.transform.localRotation = Quaternion.identity;
+                go.transform.position = topWorld + dir * builtLinkLength * (i + 0.5f);
+                go.transform.rotation = linkRot;
 
                 Rigidbody2D rb = go.AddComponent<Rigidbody2D>();
                 rb.bodyType = RigidbodyType2D.Dynamic;
@@ -180,7 +250,7 @@ namespace ProjectJuice
                 if (i == 0)
                 {
                     if (top == EndMode.Free) { Destroy(j); j = null; }
-                    else ConnectToWorldOrBody(j, top == EndMode.AttachedToBody ? topBody : null, transform.position);
+                    else ConnectToWorldOrBody(j, top == EndMode.AttachedToBody ? topBody : null, topWorld);
                 }
                 else
                 {
@@ -194,8 +264,9 @@ namespace ProjectJuice
 
                 BuildVisual(go.transform, i);
                 links.Add(rb);
+                prevJoints.Add(j);
                 spawnPos.Add(go.transform.localPosition);
-                spawnRot.Add(0f);
+                spawnRot.Add(go.transform.localEulerAngles.z);
                 prev = rb;
             }
 
@@ -207,20 +278,22 @@ namespace ProjectJuice
                 pin.enableCollision = false;
                 pin.anchor = new Vector2(0f, -builtLinkLength * 0.5f);
                 // Pull the far pin slightly towards the top: the chain starts with a little slack and sags naturally.
-                Vector2 topWorld = transform.position;
                 Vector2 endWorld = last.transform.TransformPoint(new Vector3(0f, -builtLinkLength * 0.5f, 0f));
-                endWorld = topWorld + (endWorld - topWorld) * (1f - bottomSlack);
+                endWorld = UsesAnchor ? (Vector2)bottomAnchor.position : topWorld + (endWorld - topWorld) * (1f - bottomSlack);
                 ConnectToWorldOrBody(pin, bottom == EndMode.AttachedToBody ? bottomBody : null, endWorld);
+                if (bottom == EndMode.PinnedInPlace) MakeWallPlate(transform, endWorld, HideFlags.None);
             }
+            if (top == EndMode.PinnedInPlace) MakeWallPlate(transform, topWorld, HideFlags.None);
 
             if (!selfCollision)
                 for (int a = 0; a < cols.Count; a++)
                     for (int b = a + 1; b < cols.Count; b++)
                         Physics2D.IgnoreCollision(cols[a], cols[b], true);
 
+            breakIndex = ClampedBreakIndex(builtCount);
             if (breakable && builtCount >= 2)
             {
-                breakJoint = links[ClampedBreakIndex(builtCount)].GetComponent<HingeJoint2D>();
+                breakJoint = prevJoints[breakIndex];
                 if (breakJoint != null) breakJoint.breakForce = jointBreakForce;
             }
 
@@ -262,6 +335,34 @@ namespace ProjectJuice
                 j.connectedBody = null;
                 j.connectedAnchor = worldPoint; // world space when there is no connected body
             }
+        }
+
+        /// <summary>Bolted plate drawn at a pinned end (visual only, no collider).</summary>
+        void MakeWallPlate(Transform parent, Vector2 worldPos, HideFlags flags)
+        {
+            if (!showWallPlates || wallPlateSize <= 0.001f) return;
+            float parentScale = Mathf.Max(0.0001f, Mathf.Abs(parent.lossyScale.x));
+            Sprite plate = wallPlateSprite != null ? wallPlateSprite : PlaceholderSprites.Circle;
+            GameObject p = new GameObject("WallPlate");
+            p.hideFlags = flags;
+            p.layer = gameObject.layer;
+            p.transform.SetParent(parent, false);
+            p.transform.position = new Vector3(worldPos.x, worldPos.y, transform.position.z);
+            p.transform.localScale = Vector3.one * (wallPlateSize / Mathf.Max(0.0001f, plate.bounds.size.x) / parentScale);
+            SpriteRenderer sr = p.AddComponent<SpriteRenderer>();
+            sr.sprite = plate;
+            sr.color = wallPlateColor;
+            sr.sortingOrder = sortingOrder + 2; // over the end link
+            if (wallPlateSprite != null) return;
+            GameObject bolt = new GameObject("Bolt");
+            bolt.hideFlags = flags;
+            bolt.layer = gameObject.layer;
+            bolt.transform.SetParent(p.transform, false);
+            bolt.transform.localScale = Vector3.one * 0.38f;
+            SpriteRenderer bsr = bolt.AddComponent<SpriteRenderer>();
+            bsr.sprite = PlaceholderSprites.Circle;
+            bsr.color = Color.Lerp(wallPlateColor, Color.white, 0.25f);
+            bsr.sortingOrder = sortingOrder + 3;
         }
 
         static void SetDamping(Rigidbody2D rb, float linear, float angular)
@@ -318,7 +419,35 @@ namespace ProjectJuice
 
         // ------------------------------------------------------------------ breaking
 
-        void OnBreakableBroken(ImpactInfo hit) { Break(); }
+        void OnBreakableBroken(ImpactInfo hit)
+        {
+            ChainLinkListener l = hit.collider != null ? hit.collider.GetComponent<ChainLinkListener>() : null;
+            if (breakWhereHit && l != null && l.chain == this) BreakAt(l.index);
+            else Break();
+        }
+
+        void FixedUpdate()
+        {
+            if (!Application.isPlaying || !built || IsBroken || !breakable || breakUnderMass <= 0f) return;
+            // Weight rule: the worm's REAL mass against a threshold (no "if Heavy"), like every breakable.
+            WormController w = WormController.Instance;
+            ChainLinkListener l = null;
+            if (w != null && !w.IsDead && w.Physics != null && w.Physics.Mass >= breakUnderMass
+                && w.Physics.Ground != null && w.Physics.Ground.HasSupport && w.Physics.Ground.Collider != null)
+                l = w.Physics.Ground.Collider.GetComponent<ChainLinkListener>();
+            if (l == null || l.chain != this) { weightTimer = 0f; return; }
+            weightTimer += Time.fixedDeltaTime;
+            if (weightTimer >= breakUnderMassDelay) BreakAt(breakWhereHit ? l.index : breakIndex);
+        }
+
+        /// <summary>Break the joint above link <paramref name="linkIndex"/> (clamped so both ends keep at least one link).</summary>
+        public void BreakAt(int linkIndex)
+        {
+            if (!built || IsBroken || !breakable || links.Count < 2) return;
+            breakIndex = Mathf.Clamp(linkIndex, 1, links.Count - 1);
+            breakJoint = prevJoints[breakIndex];
+            HandleBreak();
+        }
 
         internal void OnLinkJointBroken(Joint2D j)
         {
@@ -341,8 +470,8 @@ namespace ProjectJuice
             // 1. physics: remove the connection, the lower links are now free bodies.
             if (breakJoint != null) Destroy(breakJoint);
             breakJoint = null;
-            int b = ClampedBreakIndex(builtCount);
-            for (int i = b; i < links.Count; i++) if (links[i] != null) links[i].WakeUp();
+            weightTimer = 0f;
+            for (int i = 0; i < links.Count; i++) if (links[i] != null) links[i].WakeUp();
 
             // 2. visuals and listeners (never touch physics).
             if (breakEffect != null) breakEffect.Play(at, Vector2.down);
@@ -374,20 +503,23 @@ namespace ProjectJuice
             }
             if (breakable && links.Count >= 2)
             {
-                int b = ClampedBreakIndex(builtCount);
-                HingeJoint2D j = breakJoint;
-                if (j == null)
+                int b = breakIndex; // where it actually broke
+                if (prevJoints[b] == null)
                 {
-                    j = links[b].gameObject.AddComponent<HingeJoint2D>();
+                    HingeJoint2D j = links[b].gameObject.AddComponent<HingeJoint2D>();
                     j.autoConfigureConnectedAnchor = false;
                     j.enableCollision = false;
                     j.anchor = new Vector2(0f, builtLinkLength * 0.5f);
                     j.connectedBody = links[b - 1];
                     j.connectedAnchor = new Vector2(0f, -builtLinkLength * 0.5f);
+                    j.breakForce = Mathf.Infinity;
+                    prevJoints[b] = j;
                 }
-                j.breakForce = jointBreakForce;
-                breakJoint = j;
+                breakIndex = ClampedBreakIndex(builtCount);
+                breakJoint = prevJoints[breakIndex];
+                if (breakJoint != null) breakJoint.breakForce = jointBreakForce;
             }
+            weightTimer = 0f;
             IsBroken = false;
             if (breakableObject != null && breakableObject.IsBroken) breakableObject.Restore();
         }
@@ -411,6 +543,20 @@ namespace ProjectJuice
         void OnDisable()
         {
             if (!Application.isPlaying) ClearPreview();
+        }
+
+        Vector3 previewTop, previewAnchor;
+
+        void Update()
+        {
+            // Edit mode: rebuild the preview when the chain or its Bottom Anchor is moved in the Scene view.
+            if (Application.isPlaying || !UsesAnchor) return;
+            if (transform.position != previewTop || bottomAnchor.position != previewAnchor)
+            {
+                previewTop = transform.position;
+                previewAnchor = bottomAnchor.position;
+                RequestPreview();
+            }
         }
 
         void OnValidate()
@@ -438,6 +584,8 @@ namespace ProjectJuice
             // Undo the root scale on the preview so it matches what Play will build.
             Vector3 ls = transform.lossyScale;
             preview.transform.localScale = new Vector3(SafeInv(ls.x), SafeInv(ls.y), 1f);
+            Vector2 dir = ChainDirection();
+            preview.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg + 90f); // local down = dir
             int n = PreviewCount();
             float ll = PreviewLinkLength();
             float w = PreviewWidth();
@@ -465,6 +613,10 @@ namespace ProjectJuice
                     sr.sortingOrder = sortingOrder;
                 }
             }
+            Vector2 topWorld = transform.position;
+            if (top == EndMode.PinnedInPlace) MakeWallPlate(preview.transform, topWorld, HideFlags.HideAndDontSave);
+            if (bottom == EndMode.PinnedInPlace)
+                MakeWallPlate(preview.transform, UsesAnchor ? (Vector2)bottomAnchor.position : topWorld + dir * ll * n * (1f - bottomSlack), HideFlags.HideAndDontSave);
         }
 
         static float SafeInv(float v) { return Mathf.Abs(v) < 0.0001f ? 1f : 1f / v; }
@@ -487,11 +639,12 @@ namespace ProjectJuice
             float ll = built ? builtLinkLength : PreviewLinkLength();
             if (built && Application.isPlaying) return; // the real links are visible
             Vector3 topW = transform.position;
-            Vector3 down = -(transform.rotation * Vector3.up);
+            Vector3 down = ChainDirection();
             Gizmos.color = new Color(0.8f, 0.8f, 0.9f, 0.6f);
             Gizmos.DrawLine(topW, topW + down * ll * n);
             Gizmos.DrawWireSphere(topW, 0.12f);
-            if (bottom != EndMode.Free) Gizmos.DrawWireSphere(topW + down * ll * n, 0.12f);
+            if (UsesAnchor) Gizmos.DrawWireSphere(bottomAnchor.position, 0.12f);
+            else if (bottom != EndMode.Free) Gizmos.DrawWireSphere(topW + down * ll * n, 0.12f);
             if (breakable)
             {
                 Vector3 bp = topW + down * ll * ClampedBreakIndex(n);
