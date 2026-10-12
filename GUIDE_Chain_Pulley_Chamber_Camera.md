@@ -12,7 +12,10 @@ All four systems reuse what was already in the project:
 | Camera | `CameraFollow2D` (rewritten, same component) | `CameraZone` (optional) |
 | Fan | the `Fan` object in `MechanicsTest` (`FG_Props_1_10` grille, `FG_Props_1_41` body), worm mass from `WormPhysics` | `FanAirflow`, `Fan.prefab` |
 | Stepping gear | `FG_Props_1_45` in `MechanicsTest` (its own PolygonCollider2D), `WormController.Die` (like `Hazard`) | `GearStepper` |
-| Trampoline | the `Trampoline` object in `MechanicsTest` (`FG_Props_1_3` head, `FG_Props_1_42` rod, `FG_Props_1_41` base), the worm's aim (`WormLauncher`) | `Trampoline`, `Trampoline.prefab` |
+| Trampoline | the `Trampoline` object in `MechanicsTest` (`FG_Props_1_3` head, `FG_Props_1_42` rod, `FG_Props_1_41` base), the worm's own launch (`WormLauncher`) | `Trampoline`, `Trampoline.prefab` |
+| Push wheel | `FG_Props_1_55 (1)` in Area F | `PushableWheel` |
+| Bounce pads | the `FG_Props_1_3` / `FG_Props_1_6` art of Area G | `BouncePad`, `BouncePad.prefab` |
+| Checkpoint | `WormController` respawn | `Checkpoint`, `Checkpoint.prefab`, `Art/Checkpoint` sprites |
 
 > Written without access to the Unity editor. The C# compiles against the Unity API, the prefab and
 > scene YAML was written by hand, and nothing has been tested in Play mode yet. The checklist at the end
@@ -79,7 +82,8 @@ Without a Bottom Anchor the old behaviour stays: the far end is pinned where the
   2. **Joint Break Force** on `BreakableChain`: the break joint also snaps on its own when overloaded. Infinity (the default) turns this off. It's hard to tune because the chain's own weight already pulls on that joint (a lot on a long, tight chain), so use Break Under Mass for "Rocky is too heavy for it".
   3. **Code or UnityEvents**: call `BreakableChain.Break()`, for example from a button, a trigger or another object's `onBroken`.
 - Order on a break: the valid break event, then the joint is removed (lower part free), then the `BreakEffect` plays at the break point, then `onBreak` fires and the snap sound plays, then gravity takes over and the lower part falls, swings, hits walls and clinks.
-- **T** (test reset) re-hangs every chain.
+- **Harder hit, more damage** (Header *Break strength*). A hit exactly at Break Threshold snaps one joint. Every **Force Per Extra Break** (18) above it snaps one more, up to **Max Breaks** (5), spaced **Break Spacing** (3) links apart above and below the first one. So a short Rocky drop (force about 25) snaps it once, and a fall from high up (40 u/s, force 100) breaks it into five pieces. The links near the hit are also kicked away from the worm by **Impact Push** × force (within **Push Radius** links) and spun, and the break VFX grows with **Effect Growth** and plays at every snap. Standing on it (Break Under Mass) is always a single snap. Set Force Per Extra Break to 0 for the old single snap.
+- **T** (test reset) re-hangs every chain, all pieces included.
 
 ### Changing the physics
 On `BreakableChain` > **Physics**:
@@ -378,19 +382,61 @@ It turns **clockwise in clicks**: a quick turn of one tooth, a small overshoot t
 
 ### Where it is
 - Prefab: **`Assets/Prefabs/Gameplay/Trampoline.prefab`**: `Trampoline (Trampoline)` > `FG_Props_1_41` (base) and `FG_Props_1_3` (head) > `FG_Props_1_42` (rod, moves with the head).
-- The `Trampoline` object in `MechanicsTest` (`Area_D tubi` > `tubo2`) is now an instance of this prefab, in the same place.
+- The `Trampoline` object in `MechanicsTest` (`Area_D tubi` > `tubo2`) is an instance of this prefab.
 - Script: `Scripts/Gameplay/Trampoline.cs`.
 
 ### How it works
-1. Land or stand on the head as **Rocky**. Its mass (2.5) is at least **Trigger Mass** (1.5), so the head sinks (**Compress Depth**, **Compress Time**) and shakes a little. Bouncy (0.3) just stands on it.
-2. **Charge Time** (1 s) after it was set off, it springs up and throws the worm at **Launch Speed** (32 u/s, the same whatever the material: about 8 units high for Rocky).
-3. **During that second you can still choose the trajectory**: aim as usual (click and drag) and **keep holding**. When it fires, you go the way you're aiming, kept within **Max Steer Angle** (60°) of straight up. If you don't aim, you go straight up. If you let go of the drag before it fires, that's a normal launch and the trampoline fires empty.
-4. **Aim Power Sets Speed** (off): on, the drag length also sets the throw speed, from **Min Power Share** to 100%.
-- **Fire Time / Fire Overshoot / Return Time / Cooldown** control the spring's movement after the throw. **Charge Shake** is the tell while it's charged.
-- **On Charge**, **On Fire**: events for sounds or effects. `Trigger()` sets it off from another script or a UnityEvent.
-- Select it to see the throw direction (orange) and the steering limits.
+1. Land or stand on the head as **Rocky**. Its mass (2.5) is at least **Trigger Mass** (1.5), so the head sinks (**Compress Depth**, **Compress Time**) and shakes a little (**Charge Shake**). Bouncy (0.3) just stands on it.
+2. While it's charged you **launch exactly as usual**: click, drag to aim and set the power, release. The launch is multiplied by **Power Multiplier** (2.2), so it's the normal throw with a huge boost. The aim preview shows the boosted arc. Rocky's strongest normal launch is 26.6 u/s; ×2.2 is about 58 u/s, roughly 28 units high.
+3. **Max Launch Speed** (70) is the ceiling for the boosted speed (the worm's normal limit is 43.75; it's raised for that flight only). **Max Steer Angle** (90) keeps the launch within that many degrees of straight up; 90 allows anywhere in the upper half.
+4. If you don't launch within **Auto Fire After** (1.5 s), it throws you by itself at **Auto Launch Speed** (45 u/s), along your aim if you're holding one, otherwise straight up. 0 = it waits for you.
+5. **The head never rises more than Max Rise (0.25) above its rest position**, so the rod stays inside the base. **Fire Overshoot** (the "pop") is limited to that. **Fire Time / Return Time / Cooldown** control the spring after the throw.
+- To make it stronger, raise **Power Multiplier** and, if the throw stops getting faster, **Max Launch Speed**.
+- **On Charge**, **On Fire**: events for sounds or effects. `Trigger()` charges it from another script or a UnityEvent.
+- Select it to see the steering limits (orange).
 
-## 11. First things to check in Play mode (fan, gear, chain, pulley, trampoline; not verified here)
+## 11. Push wheel — `FG_Props_1_55 (1)` (Area F)
+
+### Where it is
+- The `FG_Props_1_55 (1)` object in `MechanicsTest` (`World` > `Area F`) has a **`PushableWheel`** component. Script: `Scripts/Gameplay/PushableWheel.cs`.
+- Its Rigidbody2D and CircleCollider2D are created at Play (Radius 2.38, the drawn wheel), so the object in the scene looks unchanged.
+
+### How it works
+1. The wheel stays parked where you put it, even on the slope, and is solid.
+2. Push it from the side as **Rocky** (mass at least **Min Pusher Mass**, 1.5). Bouncy can't move it. It starts rolling (**Start Spin**) and from then on it's a real heavy body (**Mass** 6, **Gravity Scale**, **Rolling Resistance**, **Friction**): it rolls down the slope and drops into the hole on the right.
+3. When it has come to rest at least **Min Drop** (2 units) lower than where it started, for **Settle Time**, it locks in place (Static). It's now a bridge: walk over it and carry on.
+- **On Pushed** and **On Locked**: events for sound/effects. `Release(1)` frees it from a script (1 = to the right).
+- **T** puts it back.
+- The hole is about 13 units wide and the wheel 11.8, so its top ends about 1.5 units under the far edge. If it ends too low, raise the wheel's scale slightly (and Radius with it).
+
+## 12. Bounce pads (zigzag to the exit, Area G)
+
+### Where it is
+- Prefab: **`Assets/Prefabs/Gameplay/BouncePad.prefab`**: the `FG_Props_1_3` cap (**`BouncePad`** script, trigger BoxCollider2D) > `Spring (FG_Props_1_6)`.
+- In `MechanicsTest` > `Area G super bounce`, the 6 caps and 6 springs were replaced by **`BouncePad 1 (floor)` … `BouncePad 6 (to exit)`** and an empty **`Bounce Exit`** where the worm lands.
+- Script: `Scripts/Gameplay/BouncePad.cs`.
+
+### How it works
+- When the worm touches a pad it's thrown on an exact arc into the next pad (**Next**), and the last pad throws it to **Target** (`Bounce Exit`). No aiming: it's a ride. The arc is computed from the worm's gravity at that moment, so Bouncy and Rocky follow the same path.
+- **Arc Height**: how far above the higher end the arc goes. **Landing Offset**: the point in front of the cap the previous pad aims at.
+- **Lock Input During Ride** (on): no aiming or switching until the worm lands after the last pad.
+- Juice: the cap squashes and wobbles and the spring stretches (**Squash**, **Wobble Time**), plus **Bounce Sound** and **On Bounce**.
+- **The positions were computed from the shaft's colliders**: every arc keeps at least 1.9 units from the walls (the worm's radius is 0.375), alternating right and left, up to the floor on the right of the shaft top (x 207, y 3.7), under the gears and away from the saw. The pads are at 1.8 world scale (they were 2.66), otherwise they don't fit the narrow parts of the shaft.
+- To move one, select it and drag it. The green gizmo shows each arc; keep it clear of the walls. To change the exit, move `Bounce Exit`. To add a pad, duplicate one and fix the Next links.
+
+## 13. Checkpoint
+
+### Where it is
+- Prefab: **`Assets/Prefabs/Gameplay/Checkpoint.prefab`** (**`Checkpoint`** script, trigger BoxCollider2D, SpriteRenderer). Art: `Assets/Art/Checkpoint/Checkpoint_Off.png` (dark flag hanging) and `Checkpoint_On.png` (yellow flag raised, glowing). Both are 256×512 at 128 pixels per unit (2×4 units), pivot at the bottom.
+- One is placed in `MechanicsTest` (`World` > `Checkpoint`) after the wheel's hole, before the bounce shaft (x 174, y -67.4). Drag the prefab into the scene to add more.
+
+### How it works
+- Touch it with any material: the flag goes up and lights (**Pop Scale**, **Pop Time**, optional **Activate Effect**, **Activate Sound**, **On Activated**). From then on **every death sends the worm back here**, instead of the last landing. Touching another checkpoint moves the respawn there and turns the old one off.
+- **Auto Respawn After** (1 s): after a death (hazard, gear...) the worm comes back by itself. R still works straight away. 0 = only R.
+- **Spawn Point** (optional child) or **Spawn Height** (0.6) set where the worm reappears.
+- **T** (area reset) clears the checkpoint.
+
+## 14. First things to check in Play mode (not verified here)
 1. Fan: walk into the air as Bouncy. You should rise and float near the green line. As Rocky you should stay on the ground. If Bouncy floats too high or too low, change **Lift Force**. If the air streaks are too strong or too faint, change the **Air Color** alpha.
 2. Gear: it clicks clockwise one tooth at a time. If a click looks like more or less than one tooth, adjust **Step Angle**.
 3. Chain: the worm should sit on the rings, not above them. Stand on it as Rocky and it should snap after about a quarter of a second. Bouncy should not break it.
@@ -398,4 +444,8 @@ It turns **clockwise in clicks**: a quick turn of one tooth, a small overshoot t
 5. Fan: float as Bouncy, then click and drag. You should be able to launch from mid-air.
 6. Gear: let a tooth push you against the wall on the right (as in the screenshot). You should die. Standing in a gap between teeth should not kill you.
 7. Chains: unhide all of them. The game should stay smooth; the chains still react when you hit them. Bouncy should never break them, Rocky should.
-8. Trampoline: land as Rocky, aim left or right while it's charged, and keep holding. You should be thrown that way after 1 second.
+8. Trampoline: land as Rocky, wait for it to sink, then launch as usual. You should fly about twice as high in the direction you aimed, and the rod should never come out of the base.
+9. Chains: fall on one as Rocky from low and from high. Low should snap it once; high should break it into several pieces.
+10. Wheel: push it as Rocky. It should roll into the hole and stop there; you should be able to walk across. If it rolls away by itself at the start or doesn't reach the hole, tell me.
+11. Bounce pads: go down to the bottom of the Area G shaft. You should be thrown zigzag pad to pad up to the floor on the right at the top. If a hop hits a wall, move that pad slightly or lower its **Arc Height**.
+12. Checkpoint: touch it, then die on a hazard. You should come back at the flag after 1 second.

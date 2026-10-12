@@ -48,18 +48,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectJuice.Trampoline
   head: {fileID: 9300022}
   triggerMass: 1.5
-  chargeTime: 1
+  powerMultiplier: 2.2
+  maxLaunchSpeed: 70
+  maxSteerAngle: 90
+  autoFireAfter: 1.5
+  autoLaunchSpeed: 45
   compressDepth: 0.6
   compressTime: 0.25
   fireTime: 0.06
   fireOvershoot: 0.15
+  maxRise: 0.25
   returnTime: 0.3
   cooldown: 0.4
-  chargeShake: 0.03
-  launchSpeed: 32
-  maxSteerAngle: 60
-  aimPowerSetsSpeed: 0
-  minPowerShare: 0.5
+  chargeShake: 0.02
   onCharge:
     m_PersistentCalls:
       m_Calls: []
