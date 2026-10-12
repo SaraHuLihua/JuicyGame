@@ -58,6 +58,8 @@ namespace ProjectJuice
         public bool CancelledThisFrame { get { return cancelFrame == Time.frameCount; } }
         public float AimPower { get { return aimPower; } }
         public Vector2 AimDirection { get { return aimDir; } }
+        /// <summary>The current drag is long enough to be a real aim (outside the dead zone).</summary>
+        public bool AimValid { get { return aiming && aimValid; } }
 
         void Awake()
         {
@@ -213,7 +215,7 @@ namespace ProjectJuice
                     if (ns <= 0.01f) { pos += step * 0.5f; continue; }
 
                     BreakableObject br = hit.collider.GetComponentInParent<BreakableObject>();
-                    if (br != null && !br.IsBroken && br.WouldBreak(ph.Mass * ns))
+                    if (br != null && !br.IsBroken && br.WouldBreak(ph.Mass * ns, ph.Mass))
                     {
                         ignored.Add(hit.collider);
                         v *= p.breakSpeedKeep;
