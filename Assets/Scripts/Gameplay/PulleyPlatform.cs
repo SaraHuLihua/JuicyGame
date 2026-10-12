@@ -44,7 +44,7 @@ namespace ProjectJuice
 
         void FixedUpdate()
         {
-            EnsureBody();
+            if (body == null) EnsureBody();
             WormController w = WormController.Instance;
             if (w != null && !w.IsDead && w.Physics.IsGrounded
                 && w.Physics.Ground != null && w.Physics.Ground.Carrier == (ISurfaceCarrier)this)
@@ -64,7 +64,7 @@ namespace ProjectJuice
 
         internal void MoveTo(Vector2 worldPos)
         {
-            EnsureBody();
+            if (body == null) EnsureBody();
             body.MovePosition(worldPos);
         }
 

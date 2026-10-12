@@ -1,0 +1,171 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &9000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9000002}
+  - component: {fileID: 9000004}
+  - component: {fileID: 9000005}
+  - component: {fileID: 9000006}
+  - component: {fileID: 9000003}
+  - component: {fileID: 9000007}
+  m_Layer: 0
+  m_Name: Chain
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9000002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9000001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68e17668681b546efb5d09bd6b29b0a2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectJuice.BreakableObject
+  breakThreshold: 15
+  crackFraction: 0.5
+  accumulateDamage: 1
+  shardCount: 0
+  shardColor: {r: 0.12, g: 0.12, b: 0.13, a: 1}
+  onCracked:
+    m_PersistentCalls:
+      m_Calls: []
+  onBroken:
+    m_PersistentCalls:
+      m_Calls: []
+  disableCollidersOnBreak: 0
+  hideSpriteOnBreak: 0
+  breakVfx: {fileID: 0}
+--- !u!114 &9000005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfe7dbe0103d84bc3ba27270ac2ceea1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectJuice.BreakEffect
+  effectEnabled: 1
+  offset: {x: 0, y: 0}
+  effectScale: 0.8
+  shardCount: 12
+  color: {r: 0.1, g: 0.1, b: 0.11, a: 1}
+  minSpeed: 2
+  maxSpeed: 6
+  minSize: 0.08
+  maxSize: 0.2
+  minLife: 0.5
+  maxLife: 1
+--- !u!114 &9000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c880333ff1f6f4257b89ff75c8b9e100, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectJuice.Surface
+  type: 1
+  profileOverride: {fileID: 0}
+--- !u!114 &9000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34a172337b3e1424685e9725b7aaf155, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectJuice.BreakableChain
+  linkCount: 12
+  linkLength: 0.45
+  linkWidth: 0.3
+  top: 1
+  topBody: {fileID: 0}
+  bottom: 0
+  bottomBody: {fileID: 0}
+  bottomSlack: 0.06
+  ringSprites:
+  - {fileID: -2135677790, guid: 4079e2a3ac5ea41dd85de3708b50154d, type: 3}
+  - {fileID: 1398062498, guid: 4079e2a3ac5ea41dd85de3708b50154d, type: 3}
+  - {fileID: 1085058831, guid: 4079e2a3ac5ea41dd85de3708b50154d, type: 3}
+  barSprites:
+  - {fileID: 2119310972, guid: 4079e2a3ac5ea41dd85de3708b50154d, type: 3}
+  - {fileID: -1347565736, guid: 4079e2a3ac5ea41dd85de3708b50154d, type: 3}
+  - {fileID: 1288902694, guid: 4079e2a3ac5ea41dd85de3708b50154d, type: 3}
+  artRingPitchPixels: 190
+  artScale: 1
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  sortingOrder: 5
+  linkMass: 0.15
+  gravityScale: 0.8
+  linearDamping: 0.25
+  angularDamping: 1.5
+  surfaceType: 1
+  selfCollision: 0
+  linkLayer: -1
+  breakable: 1
+  breakAtLink: 6
+  jointBreakForce: inf
+  breakEffect: {fileID: 9000005}
+  onBreak:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &9000007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 297cb1ddfe2444aeb53a984fad0a019a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectJuice.ChainSounds
+  impactClips: []
+  breakClips: []
+  useGeneratedSoundsWhenEmpty: 1
+  impactVolume: 0.55
+  breakVolume: 0.9
+  pitchRange: {x: 0.9, y: 1.15}
+  spatialBlend: 0
+  minImpactSpeed: 2
+  fullVolumeSpeed: 12
+  minInterval: 0.07
+  maxPerSecond: 8
+  perLinkCooldown: 0.25

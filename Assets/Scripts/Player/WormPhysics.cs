@@ -141,7 +141,7 @@ namespace ProjectJuice
                 groundVel = target;
             }
             if (support && ground.Body != null && ground.Body.bodyType != RigidbodyType2D.Static)
-                groundVel += ground.Body.GetVelocity();
+                groundVel += ground.Body.GetPointVelocity(ground.Point); // includes spin (rotating chamber, gears)
 
             // Settling is measured relative to whatever the worm stands on.
             float relSpeed = (v - groundVel).magnitude;
