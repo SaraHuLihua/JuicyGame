@@ -20327,6 +20327,7 @@ GameObject:
   - component: {fileID: 1244172281}
   - component: {fileID: 1244172280}
   - component: {fileID: 1244172279}
+  - component: {fileID: 880000143}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -36313,3 +36314,28 @@ SceneRoots:
   - {fileID: 2036472412}
   - {fileID: 1714524334}
   - {fileID: 880000102}
+--- !u!114 &880000143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1244172278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18a095d69da4ccaab97662978e7a993, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectJuice.CameraFx
+  shader: {fileID: 4800000, guid: ee141c24ee8e40f8a14c0b92643c0eb9, type: 3}
+  bloom: 1
+  threshold: 0.75
+  softKnee: 0.5
+  intensity: 0.7
+  radius: 4
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  deathTint: 1
+  deathColor: {r: 0.85, g: 0.08, b: 0.1, a: 1}
+  deathStrength: 0.85
+  deathVignette: 0.7
+  deathFadeIn: 0.18
+  deathFadeOut: 0.45
