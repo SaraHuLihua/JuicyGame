@@ -21,6 +21,10 @@ namespace ProjectJuice
         public float restMaxSpeed = 40f / 32f;
         [Tooltip("Seconds the worm must stay settled before it can launch again.")]
         public float settleTime = 0.05f;
+        [Tooltip("Also ready to launch after touching the ground this long without stopping (rolling on a slope, riding a moving platform or gear), if slower than Rolling Max Speed. 0 = off.")]
+        public float rollingLaunchAfter = 0.25f;
+        [Tooltip("Speed relative to the ground (units/s) under which Rolling Launch After applies.")]
+        public float rollingMaxSpeed = 6f;
         [Tooltip("After a launch/kick the ground is ignored this long so the worm is not re-grounded instantly.")]
         public float ungroundAfterLaunch = 0.12f;
         [Tooltip("Safety net: if the worm rests on a non-landing surface (Membrane) this long, launching is allowed. 0 = off.")]
@@ -38,11 +42,14 @@ namespace ProjectJuice
         Vector2 prevVelocity;
         float settledTimer;
         float nonLandingTimer;
+        float contactTimer;
         float ungroundUntil;
         bool canLaunch;
         float airLaunchUntil;
         float overspeedCap;
         float overspeedUntil;
+        float superBounceUntil;
+        float superBounceSpeed;
 
         public WormMaterial Material { get; private set; }
         public WormMaterialProfile Profile { get { EnsureInit(); return profile; } }
@@ -153,13 +160,15 @@ namespace ProjectJuice
             float relSpeed = (v - groundVel).magnitude;
             float limit = canLaunch ? restMaxSpeed * 1.5f : restMaxSpeed; // small hysteresis against jitter
             if (valid && relSpeed <= limit) settledTimer += dt; else settledTimer = 0f;
+            if (valid && relSpeed <= rollingMaxSpeed) contactTimer += dt; else contactTimer = 0f;
 
             // Never get stuck forever resting on a membrane.
             if (support && !ground.ValidLanding && relSpeed <= restMaxSpeed) nonLandingTimer += dt; else nonLandingTimer = 0f;
             bool rescued = rescueSeconds > 0f && nonLandingTimer >= rescueSeconds;
 
             IsGrounded = valid || rescued;
-            bool ready = settledTimer >= settleTime || rescued;
+            bool rolling = rollingLaunchAfter > 0f && contactTimer >= rollingLaunchAfter;
+            bool ready = settledTimer >= settleTime || rolling || rescued;
             if (ready && !canLaunch)
             {
                 canLaunch = true;
@@ -218,6 +227,18 @@ namespace ProjectJuice
             airLaunchUntil = Time.time + 0.05f;
         }
 
+        /// <summary>
+        /// For the next seconds every hit bounces the worm back at least this fast (both materials), so it
+        /// pinballs around by itself without landing (Bumper Room). 0 seconds stops it.
+        /// </summary>
+        public void SuperBounce(float seconds, float minSpeed)
+        {
+            superBounceUntil = Time.time + seconds;
+            superBounceSpeed = minSpeed;
+        }
+
+        public bool IsSuperBouncing { get { return Time.time < superBounceUntil; } }
+
         /// <summary>Instant push from a mechanism (piston, roller). Delta-v = impulse / mass: light worms fly further.</summary>
         public void AddExternalImpulse(Vector2 impulse)
         {
@@ -235,6 +256,7 @@ namespace ProjectJuice
             airLaunchUntil = 0f;
             settledTimer = 0f;
             nonLandingTimer = 0f;
+            contactTimer = 0f;
             canLaunch = false;
             IsGrounded = false;
         }
@@ -248,6 +270,7 @@ namespace ProjectJuice
             prevVelocity = Vector2.zero;
             settledTimer = 0f;
             nonLandingTimer = 0f;
+            contactTimer = 0f;
             canLaunch = false;
             IsGrounded = false;
         }
@@ -297,11 +320,17 @@ namespace ProjectJuice
             float restitution = profile.GetRestitution(sp.type) * sp.restitutionMultiplier;
             float outSpeed = bestSpeed * restitution;
             if (outSpeed < profile.stopBounceSpeed) outSpeed = 0f;
+            bool super = IsSuperBouncing;
+            if (super)
+            {
+                outSpeed = Mathf.Clamp(bestSpeed, superBounceSpeed, superBounceSpeed * 1.6f); // never dies down: pinball
+                BeginAirborne();
+            }
 
             Vector2 tangent = new Vector2(-bestNormal.y, bestNormal.x);
             float vt = Vector2.Dot(prevVelocity, tangent);
             bool isImpact = bestSpeed > profile.stopBounceSpeed;
-            if (isImpact && bestNormal.y > 0.5f)
+            if (isImpact && bestNormal.y > 0.5f && !super)
                 vt *= Mathf.Lerp(1f, profile.landingTangentialKeep, sp.landingGrip);
 
             rb.SetVelocity(tangent * vt + bestNormal * outSpeed);

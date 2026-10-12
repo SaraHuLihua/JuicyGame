@@ -105,7 +105,6 @@ namespace ProjectJuice
                 Vector2 sv = (dir + Random.insideUnitCircle * 0.9f).normalized * Random.Range(5f, 12f);
                 SimpleDebris.Spawn(hitPoint, sv, flashColor, Random.Range(0.08f, 0.18f), Random.Range(0.25f, 0.5f));
             }
-            GameAudio.Play("bumper", Mathf.Lerp(0.6f, 0.95f, c01), 1f + 0.06f * Mathf.Min(Combo - 1, 8)); // each combo hit a note higher
             if (Combo >= comboForSlowMo) SlowMo();
             onBump.Invoke();
         }

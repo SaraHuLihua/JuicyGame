@@ -42,6 +42,8 @@ namespace ProjectJuice
         float deadTimer;
 
         public event Action<WormMaterial> MaterialChanged;
+        /// <summary>Only the player's own switch (key / right click), not a reset or a level script. AudioManager plays the switch sound on it.</summary>
+        public event Action<WormMaterial> PlayerMaterialSwitched;
         public event Action<Vector2> Landed;
         public event Action<Vector2, float> Launched;   // position, power 0..1
         public event Action<ImpactInfo> Impacted;
@@ -55,7 +57,6 @@ namespace ProjectJuice
             launcher = GetComponent<WormLauncher>();
             counter = GetComponent<LaunchCounter>();
             GameJuice.Ensure();
-            GameAudio.Ensure();
             LevelFlow.Ensure();
             physics.SetMaterial(startMaterial);
             LastLandingPosition = transform.position;
@@ -85,7 +86,9 @@ namespace ProjectJuice
         /// <summary>Squishy &lt;-&gt; Heavy. Works ANYTIME, including airborne. Preserves momentum (see WormPhysics.SetMaterial).</summary>
         public bool ChangeMaterial()
         {
-            return SetMaterial(physics.Material == WormMaterial.Squishy ? WormMaterial.Heavy : WormMaterial.Squishy);
+            bool changed = SetMaterial(physics.Material == WormMaterial.Squishy ? WormMaterial.Heavy : WormMaterial.Squishy);
+            if (changed && PlayerMaterialSwitched != null) PlayerMaterialSwitched(physics.Material);
+            return changed;
         }
 
         public bool SetMaterial(WormMaterial m)
@@ -93,19 +96,29 @@ namespace ProjectJuice
             if (IsDead || inputLocked) return false;
             if (m == physics.Material) return false;
             physics.SetMaterial(m);
-            GameAudio.Play(m == WormMaterial.Heavy ? "switch_heavy" : "switch_squishy", 0.6f);
             if (MaterialChanged != null) MaterialChanged(m);
             return true;
         }
 
         // ------------------------------------------------------------------ launching
 
+        float lastCouldLaunch = -99f;
+
+        /// <summary>Seconds since the worm could last launch (0 while it can).</summary>
+        public float TimeSinceCouldLaunch { get { if (CanLaunch) lastCouldLaunch = Time.time; return Time.time - lastCouldLaunch; } }
+
         public bool PerformLaunch(Vector2 direction, float power01, float forceMultiplier)
         {
-            if (IsDead || !CanLaunch) return false;            // no mid-air relaunch, no launch while dead
+            return PerformLaunch(direction, power01, forceMultiplier, 0f);
+        }
+
+        /// <summary>Grace = seconds after losing footing in which the launch still counts (a release just as a platform moved).</summary>
+        public bool PerformLaunch(Vector2 direction, float power01, float forceMultiplier, float grace)
+        {
+            if (IsDead || inputLocked) return false;
+            if (!CanLaunch && TimeSinceCouldLaunch > grace) return false; // no mid-air relaunch, no launch while dead
             physics.Launch(direction, power01, forceMultiplier);
             counter.Increment();
-            GameAudio.Play("launch", Mathf.Lerp(0.45f, 0.9f, power01), Mathf.Lerp(0.9f, 1.15f, power01));
             if (Launched != null) Launched(transform.position, power01);
             return true;
         }
@@ -121,7 +134,6 @@ namespace ProjectJuice
             if (IsDead || LevelFlow.IsComplete) return;
             IsDead = true;
             deadTimer = 0f;
-            GameAudio.Play("death", 0.8f);
             GameJuice.Shake(0.12f);
             if (Died != null) Died(reason);
         }

@@ -78,7 +78,7 @@ namespace ProjectJuice
         {
             LevelSettings s = LevelSettings.Current;
             if (counter == null) return;
-            counter.text = string.Format(s != null ? s.counterText : "Jumps {0}", n);
+            counter.text = string.Format(s != null ? s.counterText : "Launches {0}", n);
             if (n > 0) counterPop = 1f;
         }
 
@@ -154,7 +154,6 @@ namespace ProjectJuice
 
             // Chalk confetti burst + shake + short slow motion.
             GameJuice.Shake(0.25f);
-            GameAudio.Play("win", 0.9f);
             for (int i = 0; i < 46; i++)
             {
                 Vector2 v = new Vector2(Random.Range(-1f, 1f), Random.Range(0.4f, 1.6f)).normalized * Random.Range(6f, 16f);
@@ -193,8 +192,8 @@ namespace ProjectJuice
             Place(count.rectTransform, new Vector2(0f, 10f), new Vector2(1200f, 140f));
             TextMeshProUGUI bestLine = Text("Best", panel, "", BodyFont(), 56f, new Color(1f, 1f, 1f, 0.75f));
             Place(bestLine.rectTransform, new Vector2(0f, -85f), new Vector2(1200f, 90f));
-            RectTransform retry = MakeButton(panel, s != null ? s.retryText : "Retry", new Vector2(-280f, -260f), new Color(1f, 0.655f, 0.875f, 1f), () => { GameAudio.Play("ui_click"); RestartLevel(); });
-            RectTransform menu = MakeButton(panel, s != null ? s.menuText : "Main Menu", new Vector2(280f, -260f), new Color(0.663f, 0.647f, 1f, 1f), () => { GameAudio.Play("ui_click"); GoToMainMenu(); });
+            RectTransform retry = MakeButton(panel, s != null ? s.retryText : "Retry", new Vector2(-280f, -260f), new Color(1f, 0.655f, 0.875f, 1f), () => RestartLevel());
+            RectTransform menu = MakeButton(panel, s != null ? s.menuText : "Main Menu", new Vector2(280f, -260f), new Color(0.663f, 0.647f, 1f, 1f), () => GoToMainMenu());
             title.rectTransform.localScale = Vector3.zero;
             count.alpha = 0f;
             bestLine.alpha = 0f;
@@ -214,14 +213,13 @@ namespace ProjectJuice
             title.rectTransform.localRotation = Quaternion.identity;
 
             // 2. jumps counted up one by one, a tick each, a pop at the end
-            string fmt = s != null ? s.jumpsText : "Jumps: {0}";
+            string fmt = s != null ? s.jumpsText : "Launches: {0}";
             count.alpha = 1f;
             float step = jumps > 0 ? Mathf.Clamp(1.2f / jumps, 0.035f, 0.12f) : 0f;
             for (int i = 0; i <= jumps; i++)
             {
                 count.text = string.Format(fmt, i);
                 count.rectTransform.localScale = Vector3.one * 1.12f;
-                if (i > 0) GameAudio.Play("tick", 0.5f, 1f + Mathf.Min(i, 30) * 0.015f);
                 for (float t = 0f; t < step; t += Time.unscaledDeltaTime)
                 {
                     count.rectTransform.localScale = Vector3.one * Mathf.Lerp(1.12f, 1f, t / step);
@@ -238,7 +236,7 @@ namespace ProjectJuice
 
             // 3. best score, then the buttons pop in
             bestLine.text = newBest ? (s != null ? s.newBestText : "New best!") : string.Format(s != null ? s.bestText : "Best: {0}", best);
-            if (newBest) { bestLine.color = new Color(1f, 0.85f, 0.35f, 1f); GameAudio.Play("checkpoint", 0.7f, 1.2f); }
+            if (newBest) { bestLine.color = new Color(1f, 0.85f, 0.35f, 1f); }
             for (float t = 0f; t < 0.25f; t += Time.unscaledDeltaTime) { bestLine.alpha = t / 0.25f; yield return null; }
             bestLine.alpha = 1f;
             for (float t = 0f; t < 0.4f; t += Time.unscaledDeltaTime)
@@ -287,11 +285,11 @@ namespace ProjectJuice
             if (s == null || s.showJumpCounter)
             {
                 counter = Text("Jump Counter", canvas.transform, "", BodyFont(), 72f, Color.white);
-                counter.alignment = TextAlignmentOptions.TopLeft;
+                counter.alignment = TextAlignmentOptions.Left;
                 counterRect = counter.rectTransform;
                 counterRect.anchorMin = counterRect.anchorMax = new Vector2(0f, 1f);
-                counterRect.pivot = new Vector2(0.2f, 0.6f);
-                counterRect.anchoredPosition = new Vector2(70f, -70f);
+                counterRect.pivot = new Vector2(0f, 0.5f); // pops from its left edge, never off screen
+                counterRect.anchoredPosition = new Vector2(60f, -80f);
                 counterRect.sizeDelta = new Vector2(600f, 110f);
                 OnCounterChanged(0);
             }

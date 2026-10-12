@@ -135,7 +135,6 @@ namespace ProjectJuice
             body.constraints = RigidbodyConstraints2D.None;
             body.WakeUp();
             body.angularVelocity = -side * startSpin; // clockwise rolls right
-            GameAudio.PlayAt("wheel_push", body.position, 0.7f);
             onPushed.Invoke();
         }
 
@@ -158,7 +157,6 @@ namespace ProjectJuice
             CircleCollider2D col = GetComponent<CircleCollider2D>();
             float r = col != null ? col.radius * Mathf.Abs(transform.lossyScale.x) : 1f;
             GameJuice.Puff(body.position + Vector2.down * r, Vector2.up, 10, 2f);
-            GameAudio.PlayAt("thud_big", body.position, 0.9f);
             onLocked.Invoke();
         }
 

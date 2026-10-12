@@ -80,10 +80,8 @@ namespace ProjectJuice
         bool initialised;
         float wheelBaseAngle;
         WormController subscribedWorm;
-        float lastCreak = -99f;
         float lastLandingKick = -99f;
         float peakSpeed;
-        float prevSpeed;
         bool wasAtEnd;
         float lastClunk = -99f;
 
@@ -148,8 +146,6 @@ namespace ProjectJuice
             float k01 = Mathf.Clamp01(hit.impactForce / 60f);
             p.Squash(landingSquash * Mathf.Lerp(0.35f, 1f, k01));
             (p == platformA ? platformB : platformA).Squash(-landingSquash * 0.4f * k01); // the other side jerks up
-            GameAudio.PlayAt("rope_twang", p.transform.position, Mathf.Lerp(0.35f, 0.9f, k01), Mathf.Lerp(1.15f, 0.85f, k01));
-            Creak(Mathf.Abs(velocity));
         }
 
         void FixedUpdate()
@@ -207,8 +203,6 @@ namespace ProjectJuice
                 velocity = Mathf.Abs(before) >= clunkFromSpeed ? -before * endBounce : 0f; // only a real slam bounces back
             }
             wasAtEnd = Mathf.Abs(travel) >= maxTravel - 0.01f;
-            if (Mathf.Abs(velocity) > 1f && prevSpeed <= 1f) Creak(Mathf.Abs(velocity)); // starts moving
-            prevSpeed = Mathf.Abs(velocity);
 
             platformA.MoveTo(new Vector2(restA.x, restA.y - travel));
             platformB.MoveTo(new Vector2(restB.x, restB.y + travel));
@@ -224,15 +218,6 @@ namespace ProjectJuice
             platformB.Squash(0.15f * k);
             Vector2 low = travel > 0f ? (Vector2)platformA.transform.position : (Vector2)platformB.transform.position;
             GameJuice.Puff(low, Vector2.up, 6, 0.9f);
-            GameAudio.PlayAt("pulley_clunk", low, Mathf.Lerp(0.4f, 1f, k));
-        }
-
-        void Creak(float speed)
-        {
-            if (Time.time - lastCreak < 0.6f) return;
-            lastCreak = Time.time;
-            Vector2 at = wheel != null ? (Vector2)wheel.position : (Vector2)transform.position;
-            GameAudio.PlayAt("pulley_creak", at, Mathf.Clamp(0.25f + speed * 0.08f, 0.25f, 0.7f), Mathf.Clamp(0.85f + speed * 0.04f, 0.85f, 1.3f));
         }
 
         void LateUpdate()

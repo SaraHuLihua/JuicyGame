@@ -26,7 +26,7 @@ namespace ProjectJuice
         float hover, press, click;
         bool over, down;
 
-        public void OnPointerEnter(PointerEventData e) { over = true; GameAudio.Play("tick", 0.35f, 1.4f); }
+        public void OnPointerEnter(PointerEventData e) { over = true; }
         public void OnPointerExit(PointerEventData e) { over = false; down = false; }
         public void OnPointerDown(PointerEventData e) { down = true; click = 1f; }
         public void OnPointerUp(PointerEventData e) { down = false; }

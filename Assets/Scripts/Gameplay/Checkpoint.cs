@@ -96,7 +96,6 @@ namespace ProjectJuice
             GameJuice.Shake(0.1f);
             if (activateEffect != null) activateEffect.Play(flagRenderer != null ? (Vector2)flagRenderer.bounds.center : (Vector2)transform.position, transform.up);
             if (audioSource != null) audioSource.PlayOneShot(activateSound, activateVolume);
-            else GameAudio.Play("checkpoint", activateVolume);
             onActivated.Invoke();
         }
 

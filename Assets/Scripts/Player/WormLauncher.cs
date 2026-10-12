@@ -18,12 +18,14 @@ namespace ProjectJuice
         [Header("Launch")]
         [Tooltip("Global multiplier on the per-material Min/Max Launch Speed (see the Worm Material Profiles).")]
         public float launchForceMultiplier = 1f;
-        [Tooltip("Screen pixels of drag for full power. Web: 220.")]
+        [Tooltip("Drag for full power, in pixels of a 1080-pixel-high screen (scaled to the real screen, so it feels the same on any monitor). Web: 220.")]
         public float dragForMaxPower = 220f;
         [Tooltip("Multiplies the drag. >1 = shorter drag needed.")]
         public float aimSensitivity = 1f;
-        [Tooltip("Drags shorter than this (pixels) do nothing. Web: 12.")]
+        [Tooltip("Drags shorter than this (pixels of a 1080-pixel-high screen) do nothing. Web: 12.")]
         public float deadZone = 12f;
+        [Tooltip("While aiming, the worm may lose its footing this long (a moving platform, a gear, a small bounce) without the aim being dropped; the aim waits and comes back. Releasing within this time after it last could launch still launches.")]
+        public float footingGrace = 0.2f;
 
         [Header("Aim range")]
         [Tooltip("The web prototype only allowed upward shots. Full allows any direction.")]
@@ -82,6 +84,11 @@ namespace ProjectJuice
         [Range(0f, 0.3f)] public float fullPowerPulse = 0.08f;
         public int feedbackSortingOrder = 31;
 
+        [Header("Drag guide")]
+        [Tooltip("While dragging, a faint chalk dot where you pressed and one under the pointer, joined by dots: shows you can drag anywhere, the worm is always the reference.")]
+        public bool showDragGuide = true;
+        [Range(0f, 1f)] public float dragGuideAlpha = 0.45f;
+
         WormController controller;
         bool aiming;
         Vector2 startPx;
@@ -108,6 +115,7 @@ namespace ProjectJuice
         readonly List<Collider2D> ignored = new List<Collider2D>();
         SpriteRenderer band;
         Transform visualRoot;
+        readonly List<SpriteRenderer> guide = new List<SpriteRenderer>();
         static readonly RaycastHit2D[] castHits = new RaycastHit2D[8];
 
         public bool IsAiming { get { return aiming; } }
@@ -158,10 +166,14 @@ namespace ProjectJuice
             }
 
             if (GameInput.RightDown || GameInput.EscapeDown) { Cancel(); cancelFrame = Time.frameCount; return; }
-            if (!controller.CanLaunch) { Cancel(); return; } // lost footing while aiming
+            if (controller.IsDead || controller.inputLocked) { Cancel(); return; }
 
+            // Lost footing while aiming (moving platform, gear, small bounce): keep the drag, hide the preview,
+            // and pick it up again as soon as the worm is steady. The aim is only dropped by letting go.
             currentPx = GameInput.PointerPosition;
-            UpdateAim();
+            bool steady = controller.CanLaunch || controller.TimeSinceCouldLaunch <= footingGrace;
+            if (steady) UpdateAim();
+            else { aimValid = false; HidePreview(); }
             if (GameInput.LeftUp) Release();
         }
 
@@ -198,16 +210,18 @@ namespace ProjectJuice
 
         void Release()
         {
-            bool fire = aimValid && controller.CanLaunch;
+            bool fire = aimValid;
             Vector2 d = aimDir;
             float p = aimPower;
             Cancel();
-            if (fire) controller.PerformLaunch(d, p, launchForceMultiplier);
+            if (fire) controller.PerformLaunch(d, p, launchForceMultiplier, footingGrace);
         }
 
         void UpdateAim()
         {
-            Vector2 drag = (currentPx - startPx) * aimSensitivity;
+            // Pixels are measured on a 1080-pixel-high screen, so the same drag gives the same power on any monitor.
+            float px = 1080f / Mathf.Max(200f, Screen.height);
+            Vector2 drag = (currentPx - startPx) * aimSensitivity * px;
             float len = drag.magnitude;
             if (len < deadZone) { aimValid = false; HidePreview(); return; }
 
@@ -221,6 +235,7 @@ namespace ProjectJuice
             aimValid = true;
 
             if (arc != null || arrow != null) DrawFeedback(); else DrawBand();
+            if (showDragGuide) DrawDragGuide();
             if (showPreview) DrawPreview();
             else { for (int i = 0; i < dots.Count; i++) dots[i].enabled = false; if (landing != null) landing.enabled = false; }
         }
@@ -288,6 +303,34 @@ namespace ProjectJuice
             }
         }
 
+        void DrawDragGuide()
+        {
+            Camera cam = Camera.main;
+            if (cam == null) return;
+            Vector2 a = cam.ScreenToWorldPoint(new Vector3(startPx.x, startPx.y, 0f));
+            Vector2 b = cam.ScreenToWorldPoint(new Vector3(currentPx.x, currentPx.y, 0f));
+            const int count = 7;
+            while (guide.Count < count)
+            {
+                Sprite chalk = trajectoryDotSprites != null && trajectoryDotSprites.Length > 0 ? trajectoryDotSprites[0] : null;
+                SpriteRenderer sr = PlaceholderSprites.Make("Drag Guide", visualRoot, chalk != null ? chalk : PlaceholderSprites.Circle, Color.white, Vector2.zero, new Vector2(dotSize, dotSize), feedbackSortingOrder - 3);
+                guide.Add(sr);
+            }
+            for (int i = 0; i < count; i++)
+            {
+                float t = i / (count - 1f);
+                SpriteRenderer sr = guide[i];
+                sr.enabled = true;
+                sr.transform.position = Vector2.Lerp(a, b, t);
+                bool end = i == 0 || i == count - 1;
+                float size = end ? 2.2f : 1f;
+                sr.transform.localScale = new Vector3(size, size, 1f) * (dotSize / Mathf.Max(0.01f, sr.sprite.bounds.size.x));
+                Color c = trajectoryColor;
+                c.a = dragGuideAlpha * (end ? 1f : 0.6f);
+                sr.color = c;
+            }
+        }
+
         void HidePreview()
         {
             simPower = -1f;
@@ -296,6 +339,7 @@ namespace ProjectJuice
             if (arrow != null) arrow.enabled = false;
             if (landing != null) landing.enabled = false;
             for (int i = 0; i < dots.Count; i++) dots[i].enabled = false;
+            for (int i = 0; i < guide.Count; i++) guide[i].enabled = false;
         }
 
         /// <summary>

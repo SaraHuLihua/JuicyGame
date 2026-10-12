@@ -224,7 +224,6 @@ namespace ProjectJuice
             cooldownUntil = Time.time + fireTime + returnTime + cooldown;
             GameJuice.Shake(0.3f);
             GameJuice.Puff(head.position, transform.up, 8, 1.2f);
-            GameAudio.PlayAt("spring", head.position, 0.9f);
             onFire.Invoke();
         }
 

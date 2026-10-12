@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 1720708839687768794}
   - component: {fileID: 2243018999861432555}
   - component: {fileID: 7580257603726040006}
+  - component: {fileID: 3318840512776204811}
   m_Layer: 0
   m_Name: Worm
   m_TagString: Untagged
@@ -211,6 +212,26 @@ MonoBehaviour:
   startMaterial: 0
   respawnBelowY: -100
   inputLocked: 0
+--- !u!114 &3318840512776204811
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 945943280674214876}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41f92e4f53064126900e22700e556c26, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectJuice.WormTrail
+  squishyColor: {r: 1, g: 0.655, b: 0.875, a: 1}
+  heavyColor: {r: 0.663, g: 0.647, b: 1, a: 1}
+  opacity: 0.75
+  length: 0.3
+  width: 0.8
+  minSpeed: 4
+  colorBlend: 0.15
+  sortingOrder: 9
 --- !u!1 &7592488185131060239
 GameObject:
   m_ObjectHideFlags: 0
