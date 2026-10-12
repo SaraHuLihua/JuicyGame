@@ -7,14 +7,15 @@ namespace ProjectJuice.EditorTools
 {
     /// <summary>
     /// Two menus. Run them in order, with the project open in the editor:
-    ///   1. Project Juice > Build Chain+Pulley Prefabs  (creates Prefabs/Gameplay/BreakableChain + PulleyRig)
+    ///   1. Project Juice > Build Chain+Pulley Prefabs  (creates Prefabs/Gameplay/Chain + PulleyRig if missing)
     ///   2. Project Juice > Add Chain+Pulley Test Areas (appends Area_H + Area_I to MechanicsTest.unity)
     /// Both are safe to run again (prefabs are rebuilt, test areas are skipped if already present).
     /// </summary>
     public static class ChainPulleySetup
     {
         const string GameplayDir = "Assets/Prefabs/Gameplay";
-        const string ChainPrefabPath = "Assets/Prefabs/Gameplay/BreakableChain.prefab";
+        const string ChainPrefabPath = "Assets/Prefabs/Gameplay/Chain.prefab";
+        const string PropsSheet2 = "Assets/Art/pieces/FG_Props_2.png";
         const string PulleyPrefabPath = "Assets/Prefabs/Gameplay/PulleyRig.prefab";
         const string TestScenePath = "Assets/Scenes/MechanicsTest.unity";
 
@@ -28,11 +29,23 @@ namespace ProjectJuice.EditorTools
             GameObject chainPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ChainPrefabPath);
             if (chainPrefab == null)
             {
-                GameObject go = new GameObject("BreakableChain");
+                GameObject go = new GameObject("Chain");
+                BreakableObject br = go.AddComponent<BreakableObject>();
+                br.breakThreshold = 15f;
+                br.shardCount = 0;
+                br.disableCollidersOnBreak = false;
+                br.hideSpriteOnBreak = false;
+                BreakEffect fx = go.AddComponent<BreakEffect>();
+                fx.color = new Color(0.12f, 0.12f, 0.13f);
+                fx.shardCount = 10;
                 BreakableChain chain = go.AddComponent<BreakableChain>();
-                chain.upperLength = 2f;
-                chain.lowerLength = 2.5f;
-                chain.wormImpactThreshold = 15f;
+                chain.linkCount = 12;
+                chain.linkLength = 0.45f;
+                chain.breakAtLink = 6;
+                chain.ringSprites = SheetSprites(PropsSheet2, "FG_Props_2_11", "FG_Props_2_12", "FG_Props_2_14");
+                chain.barSprites = SheetSprites(PropsSheet2, "FG_Props_2_8", "FG_Props_2_9", "FG_Props_2_10");
+                chain.breakEffect = fx;
+                go.AddComponent<ChainSounds>();
                 PrefabUtility.SaveAsPrefabAsset(go, ChainPrefabPath);
                 Object.DestroyImmediate(go);
             }
@@ -45,15 +58,18 @@ namespace ProjectJuice.EditorTools
                 sys.maxTravel = 3f;
                 sys.moveSpeed = 2f;
 
-                Sprite circle = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Placeholders/Circle.png");
+                // Pulley wheel art: FG_Props_1_40 (big spoked wheel), drawn 1.2 units wide. Placeholder circle if missing.
+                Sprite[] wheelArt = SheetSprites("Assets/Art/pieces/FG_Props_1.png", "FG_Props_1_40");
+                Sprite circle = wheelArt.Length > 0 ? wheelArt[0] : AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Placeholders/Circle.png");
                 GameObject wheel = new GameObject("Wheel");
                 wheel.transform.SetParent(rig.transform, false);
                 wheel.transform.localPosition = new Vector3(0f, 2f, 0f);
                 SpriteRenderer wheelSr = wheel.AddComponent<SpriteRenderer>();
                 wheelSr.sprite = circle;
-                wheelSr.color = new Color(0.55f, 0.58f, 0.62f);
+                wheelSr.color = wheelArt.Length > 0 ? Color.white : new Color(0.55f, 0.58f, 0.62f);
                 wheelSr.sortingOrder = 5;
-                wheel.transform.localScale = Vector3.one * 1.2f;
+                float artWidth = circle != null ? circle.rect.width / circle.pixelsPerUnit : 1f;
+                wheel.transform.localScale = Vector3.one * (1.2f / Mathf.Max(0.01f, artWidth));
 
                 GameObject ropeGo = new GameObject("Rope");
                 ropeGo.transform.SetParent(rig.transform, false);
@@ -76,6 +92,16 @@ namespace ProjectJuice.EditorTools
             Debug.Log("[Project Juice] Prefabs ready: BreakableChain + PulleyRig in " + GameplayDir);
         }
 
+        static Sprite[] SheetSprites(string sheet, params string[] names)
+        {
+            Object[] all = AssetDatabase.LoadAllAssetsAtPath(sheet);
+            System.Collections.Generic.List<Sprite> found = new System.Collections.Generic.List<Sprite>();
+            foreach (string n in names)
+                foreach (Object o in all)
+                    if (o is Sprite && o.name == n) { found.Add((Sprite)o); break; }
+            return found.ToArray();
+        }
+
         static PulleyPlatform MakePlatform(Transform parent, string name, Vector3 localPos)
         {
             GameObject go = new GameObject(name);
@@ -86,8 +112,9 @@ namespace ProjectJuice.EditorTools
             sr.sprite = square;
             sr.color = new Color(0.36f, 0.42f, 0.47f);
             sr.sortingOrder = 3;
+            go.transform.localScale = new Vector3(2.4f, 0.4f, 1f);
             BoxCollider2D col = go.AddComponent<BoxCollider2D>();
-            col.size = new Vector2(2.4f, 0.4f);
+            col.size = Vector2.one;
             PulleyPlatform p = go.AddComponent<PulleyPlatform>();
             p.surfaceType = SurfaceType.Metal;
             return p;
@@ -121,10 +148,10 @@ namespace ProjectJuice.EditorTools
                 Block(lint, new Vector2(ox - 13.5f, oy + 7f), new Vector2(1f, 17f), a.transform);
                 Block(lint, new Vector2(ox + 6f, oy + 5f), new Vector2(1f, 11f), a.transform); // wall for the lower chain to hit
                 Block(metal, new Vector2(ox - 3f, oy + 8f), new Vector2(10f, 0.6f), a.transform); // beam the chain hangs from
-                GameObject chain = (GameObject)PrefabUtility.InstantiatePrefab(chainPrefab);
-                chain.transform.SetParent(a.transform, false);
-                chain.transform.position = new Vector3(ox - 3f, oy + 7.7f, 0f);
-                chain.name = "Chain";
+                // short, long (breaks near the wall), angled (pinned at both ends)
+                PlaceChain(chainPrefab, a.transform, "Chain_Short", new Vector2(ox - 7f, oy + 7.7f), 0f, 6, 3, BreakableChain.EndMode.Free);
+                PlaceChain(chainPrefab, a.transform, "Chain_Long", new Vector2(ox - 1f, oy + 7.7f), 0f, 14, 7, BreakableChain.EndMode.Free);
+                PlaceChain(chainPrefab, a.transform, "Chain_Angled", new Vector2(ox + 3f, oy + 7.7f), 35f, 9, 5, BreakableChain.EndMode.PinnedInPlace);
                 GameObject tube = (GameObject)PrefabUtility.InstantiatePrefab(seal);
                 tube.transform.SetParent(a.transform, false);
                 tube.transform.position = new Vector3(ox + 8f, oy + 0.5f, 0f);
@@ -133,7 +160,7 @@ namespace ProjectJuice.EditorTools
                 BreakEffect tubeVfx = tube.AddComponent<BreakEffect>();
                 tubeVfx.color = new Color(0.9f, 0.6f, 0.4f);
                 AddMarker("H  Breakable chain", new Vector2(ox - 10f, oy + 0.4f), WormMaterial.Heavy,
-                    "Launch into the chain: hinge breaks, lower falls, VFX at the snap. T restores it.", a.transform);
+                    "Hit a chain as Rocky: it snaps at its break point (red X in Scene view), the lower part falls against the wall. T restores.", a.transform);
             }
 
             // ---- I: pulley (next to H)
@@ -158,6 +185,19 @@ namespace ProjectJuice.EditorTools
             EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene(), TestScenePath);
             AssetDatabase.SaveAssets();
             Debug.Log("[Project Juice] Area_H (chain) + Area_I (pulley) appended to MechanicsTest. Press Play, jump with [ ] or digits.");
+        }
+
+        static void PlaceChain(GameObject prefab, Transform parent, string name, Vector2 top, float angle, int links, int breakAt, BreakableChain.EndMode bottom)
+        {
+            GameObject go = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            go.transform.SetParent(parent, false);
+            go.transform.position = new Vector3(top.x, top.y, 0f);
+            go.transform.rotation = Quaternion.Euler(0f, 0f, angle);
+            go.name = name;
+            BreakableChain c = go.GetComponent<BreakableChain>();
+            c.linkCount = links;
+            c.breakAtLink = breakAt;
+            c.bottom = bottom;
         }
 
         static GameObject Block(GameObject prefab, Vector2 center, Vector2 size, Transform parent)

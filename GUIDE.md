@@ -57,7 +57,7 @@ Found during inspection:
 - Change: select another sprite in the SpriteRenderer, or replace the GameObject.
 - Multiple layers/parallax later: add several `BackgroundLayer` objects at different orders/depths; drive them from one parallax script (not included — keep it manual for now).
 - Create Sorting Layer `Background` once (Edit > Project Settings > Tags and Layers) if you want names instead of numbers.
-- Camera: keep `Main Camera` orthographic (≈ 7), with `CameraFollow2D`.
+- Camera: keep `Main Camera` orthographic with `CameraFollow2D`; zoom is `CameraFollow2D > Orthographic Size` (see `GUIDE_Chain_Pulley_Chamber_Camera.md` §4).
 
 ## 6. New level (exact steps)
 
@@ -116,17 +116,15 @@ Cause (measured, not guessed): your worm PNGs are 800x800 with the animal coveri
 Changed: prefab `Worm > visualSizeMultiplier` 1.8 → 3.1 (art edge ≈ collider edge for both materials), `transitionFps` 12 → 10, `deathFps` 8 → 18 (fast death), and marker `Start_A` lifted out of the floor (y -0.14 → 1.0, rest height is ~0.91). Launch/landing math untouched.
 Rule: art size = `WormVisual.visualSizeMultiplier`, physics size = `Worm_Squishy/Heavy.radius`. Never scale the Worm root (it scales the collider too). If you redraw art with less padding, lower the multiplier until the sprite edge kisses the green collider circle in Scene view (Gizmos on).
 
-## 13. BreakableChain
+## 13. Chain (BreakableChain)
 
-Structure (auto-built, like RollerJaws): `BreakableChain > Upper` (static body, hangs from wherever you put the root) + `Lower` (dynamic body on one `HingeJoint2D` at the break point). Link sprites are visual only — no segment spam. Before break the Lower swings as a pendulum; on break the joint is destroyed and Lower falls, collides and settles with real physics.
-Break paths (all Inspector): joint `hingeBreakForce/hingeBreakTorque` (Infinity = off), `breakOnWormImpact + wormImpactThreshold` (uses worm's real mass × speed: Heavy breaks ~15+, Squishy must be fast), or call `Break()` from anything. `IsBroken`, `BreakPointWorld`, `onBreak` event for sound/shake later. `Restore()` re-hangs it; test reset (T / area jump) calls it automatically.
-New chain: duplicate `Prefabs/Gameplay/BreakableChain.prefab`, position the root at the anchor, set `upperLength/lowerLength/width`, assign `linkSprite` once you slice `FG_Props_2` (empty = grey squares), tune threshold, play.
+Rebuilt as a real link chain from the `FG_Props_2` rings: prefab `Prefabs/Gameplay/Chain.prefab`, length = `Link Count`, break point = `Break At Link`, impact breaking through the existing `BreakableObject`, VFX via `BreakEffect`, sound via `ChainSounds`. Full guide: `GUIDE_Chain_Pulley_Chamber_Camera.md` §1.
 
 ## 14. PulleyRig
 
 Structure: `PulleyRig (PulleySystem) > Wheel + Rope (PulleyRope) + PlatformA + PlatformB (PulleyPlatform)`. Movement is controlled/kinematic (MovePosition, like Piston) — stable and tunable, not a rope simulation. One `travel` scalar drives both: A.y = rest−travel, B.y = rest+travel.
 Weight: each side = `baseWeight` + rider's `WormPhysics.Mass` × `playerWeightMultiplier` (Squishy 0.3, Heavy 2.5 — read live, never duplicated). Target velocity = load difference × `moveSpeed`, capped by `maxSpeed`, smoothed by `damping`, clamped to ±`maxTravel`; empty + `autoReturn` eases back to `restOffset`; `counterBias` permanently loads side B. `travel>0` = A down / B up.
-Standing: a rider counts only while grounded with `Ground.Carrier == platform` — flying past never triggers. Platforms carry a `Surface` (default Metal, allows landing) so launching from them works normally. Rope is a 3-point `LineRenderer` (A top → wheel → B top) redrawn every frame; wheel spins with travel (gizmo shows travel rails when selected).
+Standing: a rider counts only while grounded with `Ground.Carrier == platform` — flying past never triggers. Platforms carry a `Surface` (default Metal, allows landing) so launching from them works normally. Rope: `PulleyRope` wraps over the wheel with sag/sway, drawn after interpolation; landing dip via `landingKick`; see `GUIDE_Chain_Pulley_Chamber_Camera.md` §2.
 New pulley: duplicate the prefab, place the rig, move A/B to start spots (captured at Play), tune `maxTravel/moveSpeed/damping/counterBias`, play. Different levels = different Inspector values, no code.
 
 ## 15. BreakEffect (reusable break VFX)

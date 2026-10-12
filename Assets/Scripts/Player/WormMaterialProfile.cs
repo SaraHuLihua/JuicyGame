@@ -14,7 +14,7 @@ namespace ProjectJuice
         [Header("Body")]
         [Tooltip("NEW. Used for impact force (mass * speed) and for impulses from pistons/rollers.")]
         public float mass = 0.3f;
-        [Tooltip("Multiplier on the global gravity. Web: Squishy 0.7, Heavy 1.6.")]
+        [Tooltip("Multiplier on the global gravity. Web: Squishy 0.7, Heavy 1.6. Squishy is now 1.1 (faster hops).")]
         public float gravityScale = 0.7f;
         [Tooltip("Collider radius in units. Web: 12 px / 11 px.")]
         public float radius = 0.375f;
@@ -79,8 +79,9 @@ namespace ProjectJuice
             p.material = m;
             if (m == WormMaterial.Squishy)
             {
-                p.mass = 0.3f; p.gravityScale = 0.7f; p.radius = 12f / 32f; p.bodyFriction = 0.6f;
-                p.minLaunchSpeed = 200f / 32f; p.maxLaunchSpeed = 1000f / 32f;
+                // Snappier than the web prototype (0.7 / 31.25): about the same reach, but each hop takes a third less time.
+                p.mass = 0.3f; p.gravityScale = 1.1f; p.radius = 12f / 32f; p.bodyFriction = 0.6f;
+                p.minLaunchSpeed = 8f; p.maxLaunchSpeed = 40f;
                 p.stopBounceSpeed = 25f / 32f; p.landingTangentialKeep = 0.92f; p.breakSpeedKeep = 1f;
                 p.restitutionLint = 0.35f; p.restitutionMetal = 0.7f; p.restitutionMembrane = 1.05f;
                 p.restitutionGrease = 0.5f; p.restitutionCilia = 0.2f; p.restitutionBrittle = 0.97f;

@@ -40,6 +40,9 @@ namespace ProjectJuice
         float nonLandingTimer;
         float ungroundUntil;
         bool canLaunch;
+        float airLaunchUntil;
+        float overspeedCap;
+        float overspeedUntil;
 
         public WormMaterial Material { get; private set; }
         public WormMaterialProfile Profile { get { EnsureInit(); return profile; } }
@@ -53,7 +56,7 @@ namespace ProjectJuice
         /// <summary>Touching a surface that allows landing (or rescued). Material switching needs this.</summary>
         public bool IsGrounded { get; private set; }
         /// <summary>Grounded AND settled: the player may aim and launch.</summary>
-        public bool CanLaunch { get { return canLaunch; } }
+        public bool CanLaunch { get { return canLaunch || (Time.time < airLaunchUntil && Time.time >= ungroundUntil); } }
         public SurfaceType? GroundSurfaceType { get { return ground != null && ground.HasSupport && ground.Surface != null ? ground.Surface.type : (SurfaceType?)null; } }
 
         public event Action<WormMaterial> MaterialApplied;
@@ -124,11 +127,14 @@ namespace ProjectJuice
             bool valid = support && ground.ValidLanding;
             Vector2 v = rb.GetVelocity();
 
-            // Surfaces that move the worm (cilia wave, chain).
+            // Surfaces that move the worm (cilia wave, chain, belt).
             Vector2 groundVel = Vector2.zero;
             if (support && ground.Carrier != null)
             {
-                Vector2 target = ground.Carrier.GetCarryVelocity(Material);
+                IPointSurfaceCarrier pointCarrier = ground.Carrier as IPointSurfaceCarrier;
+                Vector2 target = pointCarrier != null
+                    ? pointCarrier.GetCarryVelocityAt(Material, ground.Point)
+                    : ground.Carrier.GetCarryVelocity(Material);
                 float accel = ground.Carrier.GetCarryAcceleration(Material);
                 float targetSpeed = target.magnitude;
                 if (targetSpeed > 0.001f && accel > 0f)
@@ -141,7 +147,7 @@ namespace ProjectJuice
                 groundVel = target;
             }
             if (support && ground.Body != null && ground.Body.bodyType != RigidbodyType2D.Static)
-                groundVel += ground.Body.GetVelocity();
+                groundVel += ground.Body.GetPointVelocity(ground.Point); // includes spin (rotating chamber, gears)
 
             // Settling is measured relative to whatever the worm stands on.
             float relSpeed = (v - groundVel).magnitude;
@@ -164,8 +170,9 @@ namespace ProjectJuice
                 canLaunch = false;
             }
 
-            // Global speed cap (web: 1400 px/s).
-            if (v.sqrMagnitude > maxSpeed * maxSpeed) v = v.normalized * maxSpeed;
+            // Global speed cap (web: 1400 px/s), raised for a moment by AllowOverspeed (trampoline).
+            float cap = SpeedCap;
+            if (v.sqrMagnitude > cap * cap) v = v.normalized * cap;
             rb.SetVelocity(v);
 
             // Remember the velocity the solver is about to use: impacts are computed from it.
@@ -193,12 +200,31 @@ namespace ProjectJuice
             if (Launched != null) Launched(rb.position);
         }
 
+        float SpeedCap { get { return Time.time < overspeedUntil ? Mathf.Max(maxSpeed, overspeedCap) : maxSpeed; } }
+
+        /// <summary>Raise the global speed cap to <paramref name="cap"/> for <paramref name="seconds"/> (a trampoline's super launch).</summary>
+        public void AllowOverspeed(float cap, float seconds)
+        {
+            overspeedCap = cap;
+            overspeedUntil = Time.time + seconds;
+        }
+
+        /// <summary>
+        /// Lets the worm launch without ground for the next moment (a fan holding it up). Call it every physics step
+        /// it applies. Not a landing: the respawn point and the Landed event are untouched.
+        /// </summary>
+        public void AllowLaunchInAir()
+        {
+            airLaunchUntil = Time.time + 0.05f;
+        }
+
         /// <summary>Instant push from a mechanism (piston, roller). Delta-v = impulse / mass: light worms fly further.</summary>
         public void AddExternalImpulse(Vector2 impulse)
         {
             EnsureInit();
             Vector2 v = rb.GetVelocity() + impulse / Mathf.Max(0.01f, rb.mass);
-            if (v.sqrMagnitude > maxSpeed * maxSpeed) v = v.normalized * maxSpeed;
+            float cap = SpeedCap;
+            if (v.sqrMagnitude > cap * cap) v = v.normalized * cap;
             rb.SetVelocity(v);
             BeginAirborne();
         }
@@ -206,6 +232,7 @@ namespace ProjectJuice
         void BeginAirborne()
         {
             ungroundUntil = Time.time + ungroundAfterLaunch;
+            airLaunchUntil = 0f;
             settledTimer = 0f;
             nonLandingTimer = 0f;
             canLaunch = false;
