@@ -260,9 +260,9 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 934aa7e821e774688aaa36de7f13a236, type: 3}
   - {fileID: 21300000, guid: b379d108fd8e74a06894268008b5efdd, type: 3}
   idleFps: 6
-  transitionFps: 12
-  deathFps: 8
-  visualSizeMultiplier: 1.8
+  transitionFps: 10
+  deathFps: 18
+  visualSizeMultiplier: 3.1
   squishyJumpStretch: 0.42
   squishyLandSquash: 0.5
   squishyRecover: 5

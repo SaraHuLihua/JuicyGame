@@ -109,3 +109,27 @@ Menus/Test separation: real levels → `Scenes/Levels/`, experiments → `Scenes
 ## 11. Level 1 workflow (continue yourself)
 
 `Level1.unity` is empty — `level.png` is the reference. To continue Level 1 yourself: open `Level1.unity`, run `Create Level Template Structure`, add worm instance, block out passages with `Surface_*` + `Tube` (Traversable for open tubes, Solid for closed), add hazards with `Hazard`, background under `Background`, playtest switch-in-air (Space mid-flight). I left composition to you on purpose.
+
+## 12. Floating fix (what caused it, what changed)
+
+Cause (measured, not guessed): your worm PNGs are 800x800 with the animal covering only ~31% of the canvas. `WormVisual` scales the whole 8-unit texture down to the collider diameter, so with `visualSizeMultiplier 1.8` the visible animal rendered at ~56% of the collision circle — about 0.6 units of daylight under it at rest. Pivot offsets were negligible (~0.07). Physics/grounding were already exact.
+Changed: prefab `Worm > visualSizeMultiplier` 1.8 → 3.1 (art edge ≈ collider edge for both materials), `transitionFps` 12 → 10, `deathFps` 8 → 18 (fast death), and marker `Start_A` lifted out of the floor (y -0.14 → 1.0, rest height is ~0.91). Launch/landing math untouched.
+Rule: art size = `WormVisual.visualSizeMultiplier`, physics size = `Worm_Squishy/Heavy.radius`. Never scale the Worm root (it scales the collider too). If you redraw art with less padding, lower the multiplier until the sprite edge kisses the green collider circle in Scene view (Gizmos on).
+
+## 13. BreakableChain
+
+Structure (auto-built, like RollerJaws): `BreakableChain > Upper` (static body, hangs from wherever you put the root) + `Lower` (dynamic body on one `HingeJoint2D` at the break point). Link sprites are visual only — no segment spam. Before break the Lower swings as a pendulum; on break the joint is destroyed and Lower falls, collides and settles with real physics.
+Break paths (all Inspector): joint `hingeBreakForce/hingeBreakTorque` (Infinity = off), `breakOnWormImpact + wormImpactThreshold` (uses worm's real mass × speed: Heavy breaks ~15+, Squishy must be fast), or call `Break()` from anything. `IsBroken`, `BreakPointWorld`, `onBreak` event for sound/shake later. `Restore()` re-hangs it; test reset (T / area jump) calls it automatically.
+New chain: duplicate `Prefabs/Gameplay/BreakableChain.prefab`, position the root at the anchor, set `upperLength/lowerLength/width`, assign `linkSprite` once you slice `FG_Props_2` (empty = grey squares), tune threshold, play.
+
+## 14. PulleyRig
+
+Structure: `PulleyRig (PulleySystem) > Wheel + Rope (PulleyRope) + PlatformA + PlatformB (PulleyPlatform)`. Movement is controlled/kinematic (MovePosition, like Piston) — stable and tunable, not a rope simulation. One `travel` scalar drives both: A.y = rest−travel, B.y = rest+travel.
+Weight: each side = `baseWeight` + rider's `WormPhysics.Mass` × `playerWeightMultiplier` (Squishy 0.3, Heavy 2.5 — read live, never duplicated). Target velocity = load difference × `moveSpeed`, capped by `maxSpeed`, smoothed by `damping`, clamped to ±`maxTravel`; empty + `autoReturn` eases back to `restOffset`; `counterBias` permanently loads side B. `travel>0` = A down / B up.
+Standing: a rider counts only while grounded with `Ground.Carrier == platform` — flying past never triggers. Platforms carry a `Surface` (default Metal, allows landing) so launching from them works normally. Rope is a 3-point `LineRenderer` (A top → wheel → B top) redrawn every frame; wheel spins with travel (gizmo shows travel rails when selected).
+New pulley: duplicate the prefab, place the rig, move A/B to start spots (captured at Play), tune `maxTravel/moveSpeed/damping/counterBias`, play. Different levels = different Inspector values, no code.
+
+## 15. BreakEffect (reusable break VFX)
+
+`Scripts/Gameplay/BreakEffect.cs`: directional `SimpleDebris` burst, auto-cleaned, zero gameplay influence. Configure: `effectEnabled, offset, effectScale, shardCount, color, speed/size/life ranges`. `BreakableObject.breakVfx` fires it at the exact hit point (empty = old shards only); `BreakableChain.breakEffect` fires at the snap point; `PlaySelf()` takes no arguments so you can wire it into any `onBroken` UnityEvent. Order is always gameplay → physical change → event → VFX. New destructible later: add the component, tune colour/count, assign or wire — no code.
+Test: Area_H chain snaps with VFX + a `BrittleSeal` tube with orange burst; Area_I pulley with both materials. Run `Project Juice > Build Chain+Pulley Prefabs` then `> Add Chain+Pulley Test Areas` (appends Area_H at (0,-100), Area_I at (40,-100), skips if present).

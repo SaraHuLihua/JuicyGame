@@ -24,6 +24,10 @@ namespace ProjectJuice
         public UnityEvent onCracked;
         public UnityEvent onBroken;
 
+        [Header("Break VFX (optional, purely visual)")]
+        [Tooltip("Spawned at the hit point when this breaks. Leave empty for shards only.")]
+        public BreakEffect breakVfx;
+
         public bool IsBroken { get; private set; }
         public float Damage { get; private set; }   // 0..1
         public int CrackLevel { get; private set; }
@@ -77,6 +81,7 @@ namespace ProjectJuice
                 Vector2 vel = (dir * Random.Range(2f, 7f)) + Random.insideUnitCircle * Random.Range(1f, 5f);
                 SimpleDebris.Spawn(pos, vel, shardColor, Random.Range(0.12f, 0.3f), Random.Range(0.6f, 1.2f));
             }
+            if (breakVfx != null) breakVfx.Play(hit.point, dir); // visual only, after the physical change
             onBroken.Invoke();
         }
 

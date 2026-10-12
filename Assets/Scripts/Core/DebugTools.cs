@@ -43,6 +43,9 @@ namespace ProjectJuice
             BreakableObject[] all = FindBreakables();
             for (int i = 0; i < all.Length; i++) all[i].Restore();
 
+            BreakableChain[] chains = FindChains();
+            for (int i = 0; i < chains.Length; i++) chains[i].Restore();
+
             CameraFollow2D cam = Camera.main != null ? Camera.main.GetComponent<CameraFollow2D>() : null;
             if (cam != null) cam.Snap();
         }
@@ -53,6 +56,15 @@ namespace ProjectJuice
             return Object.FindObjectsByType<BreakableObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 #else
             return Object.FindObjectsOfType<BreakableObject>(true);
+#endif
+        }
+
+        static BreakableChain[] FindChains()
+        {
+#if UNITY_2023_1_OR_NEWER
+            return Object.FindObjectsByType<BreakableChain>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+#else
+            return Object.FindObjectsOfType<BreakableChain>(true);
 #endif
         }
     }

@@ -4873,13 +4873,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 502828252}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0.06392275, w: 0.99795485}
-  m_LocalPosition: {x: 30.67, y: 7.33, z: 0}
-  m_LocalScale: {x: 3.0542877, y: 1.4563546, z: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0.04701924, w: 0.99889404}
+  m_LocalPosition: {x: 29.95, y: 7.12, z: 0}
+  m_LocalScale: {x: 2.7091532, y: 1.4563546, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2127575221}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 7.33}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 5.39}
 --- !u!212 &502828254
 SpriteRenderer:
   serializedVersion: 2
@@ -5612,6 +5612,10 @@ PrefabInstance:
     - target: {fileID: 3100887266326380430, guid: 8311dc8780df74c64868a7ccd12a16e0, type: 3}
       propertyPath: m_Size.y
       value: 1.28
+      objectReference: {fileID: 0}
+    - target: {fileID: 3100887266326380430, guid: 8311dc8780df74c64868a7ccd12a16e0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3100887266326380430, guid: 8311dc8780df74c64868a7ccd12a16e0, type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.x
@@ -8965,13 +8969,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1152881179}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: -0.050593015, w: 0.9987194}
-  m_LocalPosition: {x: 30.47, y: 0.4, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: -0.02940449, w: 0.9995676}
+  m_LocalPosition: {x: 30.48, y: 0.59, z: 0}
   m_LocalScale: {x: 3.0542877, y: 1.4563546, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2127575221}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -5.8}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -3.37}
 --- !u!212 &1152881181
 SpriteRenderer:
   serializedVersion: 2
@@ -15652,7 +15656,7 @@ Transform:
   m_GameObject: {fileID: 1849794765}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -16.38, y: -0.14, z: 0}
+  m_LocalPosition: {x: -16.38, y: 1, z: 0}
   m_LocalScale: {x: 1.4868935, y: 1.4868935, z: 1.4868935}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -16851,6 +16855,7 @@ PolygonCollider2D:
       - {x: 0.4205, y: -0.067}
       - {x: 0.4295, y: -0.078}
       - {x: 0.4415, y: -0.096}
+      - {x: 0.44401166, y: -0.10152564}
       - {x: 0.45650002, y: -0.12900001}
       - {x: 0.46350002, y: -0.15}
       - {x: 0.46750003, y: -0.16900001}
@@ -17168,6 +17173,10 @@ PrefabInstance:
     - target: {fileID: 3100887266326380430, guid: 8311dc8780df74c64868a7ccd12a16e0, type: 3}
       propertyPath: m_Size.y
       value: 1.28
+      objectReference: {fileID: 0}
+    - target: {fileID: 3100887266326380430, guid: 8311dc8780df74c64868a7ccd12a16e0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3100887266326380430, guid: 8311dc8780df74c64868a7ccd12a16e0, type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.x
