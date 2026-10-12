@@ -9,6 +9,8 @@ Core mechanics rebuilt in Unity (2D) from the web/Electron prototype. No levels,
    ScriptableObject profiles, prefabs, `Assets/Scenes/MechanicsTest.unity` and `TestArena.unity`.
 4. Open `MechanicsTest` and press Play.
 
+Guides: `GUIDE.md` (foundation) and `GUIDE_Chain_Pulley_Chamber_Camera.md` (chain, pulley rope, rotating passage, camera).
+
 ## Controls
 | Input | Action |
 |---|---|

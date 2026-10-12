@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -9,8 +10,10 @@ namespace ProjectJuice
     /// Squishy cannot because even at top speed its mass * speed stays below normal thresholds.
     ///
     /// Weak hits (above crackFraction * threshold) crack it and add damage; two medium hits can finish it.
+    ///
+    /// Composite objects (e.g. BreakableChain) put this on their root, turn off disableCollidersOnBreak /
+    /// hideSpriteOnBreak and react to the Broken event themselves: the impact rules stay in one place.
     /// </summary>
-    [RequireComponent(typeof(Collider2D))]
     public class BreakableObject : MonoBehaviour
     {
         [Tooltip("Impact force (mass * normal speed) needed to break it in one hit. Heavy: 2.5 * (6..26 u/s) = 15..65. Squishy: 0.3 * (6..31) = 2..9 (13 when falling at top speed).")]
@@ -24,9 +27,18 @@ namespace ProjectJuice
         public UnityEvent onCracked;
         public UnityEvent onBroken;
 
+        [Header("What happens to this object when it breaks")]
+        [Tooltip("Off for objects that handle their own break (BreakableChain keeps its links solid so the pieces can fall and collide).")]
+        public bool disableCollidersOnBreak = true;
+        [Tooltip("Off for objects that handle their own break.")]
+        public bool hideSpriteOnBreak = true;
+
         [Header("Break VFX (optional, purely visual)")]
         [Tooltip("Spawned at the hit point when this breaks. Leave empty for shards only.")]
         public BreakEffect breakVfx;
+
+        /// <summary>Raised right after the break, with the hit that caused it (code-side twin of onBroken).</summary>
+        public event Action<ImpactInfo> Broken;
 
         public bool IsBroken { get; private set; }
         public float Damage { get; private set; }   // 0..1
@@ -70,17 +82,20 @@ namespace ProjectJuice
         void Break(ImpactInfo hit)
         {
             IsBroken = true;
-            Bounds b = sr != null ? sr.bounds : colliders[0].bounds; // read before disabling
-            for (int i = 0; i < colliders.Length; i++) colliders[i].enabled = false;
-            if (sr != null) sr.enabled = false;
+            Bounds b = sr != null ? sr.bounds
+                : (colliders != null && colliders.Length > 0 ? colliders[0].bounds : new Bounds(hit.point, Vector3.one * 0.5f)); // read before disabling
+            if (disableCollidersOnBreak)
+                for (int i = 0; i < colliders.Length; i++) colliders[i].enabled = false;
+            if (sr != null && hideSpriteOnBreak) sr.enabled = false;
 
             Vector2 dir = -hit.normal; // shards continue in the direction of the hit
             for (int i = 0; i < shardCount; i++)
             {
-                Vector2 pos = new Vector2(Random.Range(b.min.x, b.max.x), Random.Range(b.min.y, b.max.y));
-                Vector2 vel = (dir * Random.Range(2f, 7f)) + Random.insideUnitCircle * Random.Range(1f, 5f);
-                SimpleDebris.Spawn(pos, vel, shardColor, Random.Range(0.12f, 0.3f), Random.Range(0.6f, 1.2f));
+                Vector2 pos = new Vector2(UnityEngine.Random.Range(b.min.x, b.max.x), UnityEngine.Random.Range(b.min.y, b.max.y));
+                Vector2 vel = (dir * UnityEngine.Random.Range(2f, 7f)) + UnityEngine.Random.insideUnitCircle * UnityEngine.Random.Range(1f, 5f);
+                SimpleDebris.Spawn(pos, vel, shardColor, UnityEngine.Random.Range(0.12f, 0.3f), UnityEngine.Random.Range(0.6f, 1.2f));
             }
+            if (Broken != null) Broken(hit);                     // physical reaction of composite objects first
             if (breakVfx != null) breakVfx.Play(hit.point, dir); // visual only, after the physical change
             onBroken.Invoke();
         }

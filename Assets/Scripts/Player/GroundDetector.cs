@@ -25,6 +25,8 @@ namespace ProjectJuice
         public SurfaceProfile Profile { get; private set; }
         public ISurfaceCarrier Carrier { get; private set; }
         public Rigidbody2D Body { get; private set; }
+        /// <summary>World contact point of the support (used for the ground's point velocity on rotating bodies).</summary>
+        public Vector2 Point { get; private set; }
 
         public void Probe(CircleCollider2D own)
         {
@@ -60,6 +62,7 @@ namespace ProjectJuice
             Profile = Surface != null ? Surface.Profile : SurfaceProfile.GetDefault(SurfaceType.Metal);
             Carrier = Collider.GetComponentInParent<ISurfaceCarrier>();
             Body = Collider.attachedRigidbody;
+            Point = hits[best].point;
             HasSupport = true;
 
             BreakableObject br = Collider.GetComponentInParent<BreakableObject>();

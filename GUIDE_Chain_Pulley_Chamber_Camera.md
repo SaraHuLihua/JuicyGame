@@ -1,0 +1,251 @@
+# Chain, Pulley rope, Rotating passage, Camera — how they work and how to edit them
+
+Everything here is driven from the Inspector. No code changes are needed for normal level design.
+All four systems reuse what was already in the project:
+
+| System | Built on (existing) | New |
+|---|---|---|
+| Chain | `BreakableChain` (rewritten into a real link chain), `BreakableObject` (impact rule), `BreakEffect` (VFX), `Surface` | `ChainSounds` |
+| Pulley | `PulleySystem`, `PulleyPlatform`, `PulleyRope` (rewritten), worm mass from `WormPhysics` | — |
+| Rotating passage | the `FG_Props_1_1` object in `MechanicsTest`, `Surface`, worm physics | `RotatingChamber` |
+| Camera | `CameraFollow2D` (rewritten, same component) | `CameraZone` (optional) |
+
+> Written without access to the Unity editor. The C# compiles against the Unity API, the prefab and
+> scene YAML was written by hand, and nothing has been tested in Play mode yet. The checklist at the end
+> lists what to look at first.
+
+---
+
+## 1. Chain
+
+### Where it is
+- Prefab: **`Assets/Prefabs/Gameplay/Chain.prefab`** (this is the old `BreakableChain.prefab`, renamed and rebuilt; same GUID).
+- Scripts: `Scripts/Gameplay/BreakableChain.cs`, `Scripts/Gameplay/ChainSounds.cs`.
+- Art: the rings from **`Assets/Art/pieces/FG_Props_2.png`**:
+  - face-on rings `FG_Props_2_11`, `FG_Props_2_12`, `FG_Props_2_14`
+  - side-on links `FG_Props_2_8`, `FG_Props_2_9`, `FG_Props_2_10`
+
+  The chain alternates ring / side-on link / ring..., which is how the ready-drawn chain `FG_Props_2_18` is built, so it reads as one continuous chain.
+- Test area: menu **Project Juice > Add Chain+Pulley Test Areas** adds `Area_H` to `MechanicsTest` with a short, a long and an angled chain plus a wall to hit.
+
+### How it works
+- The chain hangs from the **Chain object's position** and runs along its **local down** direction.
+- At Play it builds `Link Count` small links under the object. Each link has its own Rigidbody2D, a CapsuleCollider2D and a HingeJoint2D to the link above it. The top link is hinged to the world (or to a body you choose).
+- Neighbouring capsules overlap slightly, so walls cannot slip between links, and the links collide individually (the chain is not one big collider). Links ignore each other by default, which keeps the chain calm and cheap.
+- Link colliders use Continuous collision, so a falling chain does not tunnel through thin walls.
+- In Edit mode you see a non-saved preview of the links, plus a red **X** gizmo on the break point.
+
+### Workflow
+1. Drag `Chain.prefab` into the scene (under `Level/Gameplay` in a real level).
+2. Move it to the hanging point (the top of the chain).
+3. Rotate it (Z rotation) for an angled start.
+4. Set **Link Count** for the length.
+5. Set **Break At Link** for the break point.
+6. Press Play.
+
+Duplicate it (Ctrl/Cmd+D) as often as you like. Every copy is independent.
+
+### Changing the length
+- **Link Count** = number of links. **Link Length** = distance between two joints (0.45 by default).
+  Total length = Link Count × Link Length (12 × 0.45 = 5.4 units).
+- Don't stretch the chain with the Scale tool. Scaling physics bodies distorts them, so at Play a Y scale is converted into more or fewer links (scale Y 2 doubles the link count) and an X scale into thicker links, then the scale is reset to 1. Prefer typing Link Count.
+- Don't put a chain under a *scaled* parent, because the link shapes would be distorted (a warning tells you).
+
+### Angled or stretched chains (both ends fixed)
+- **Top**: `PinnedInPlace` (default) hangs from the object position. `AttachedToBody` hangs from **Top Body** (for example a moving platform's Rigidbody2D). `Free` means nothing holds it.
+- **Bottom**: `Free` (default) is a normal hanging chain. `PinnedInPlace` fixes the last link where it spawned, so a rotated chain spans between two points. `AttachedToBody` fixes it to **Bottom Body**.
+- **Bottom Slack** (pinned bottom only): the span is this much shorter than the chain, so it hangs in a soft curve instead of a rigid bar. Keep it at 0.04–0.1.
+
+### Changing the break point
+- **Break At Link**: the joint above this link breaks. With 12 links, 6 breaks in the middle, 1 just under the top link and 11 above the last link.
+- **Breakable** off gives an unbreakable chain.
+- What breaks it:
+  1. **Worm impact**, through the project's existing `BreakableObject` on the Chain object, with the same rule as brittle seals: impact force = worm mass × speed into the chain. **Break Threshold** is 15 by default, which Rocky reaches easily (15–65) and Bouncy practically never (2–9). **Crack Fraction / Accumulate Damage** work as usual, so two medium hits can snap it. A hit anywhere on the chain counts, and the chain then snaps at its break point.
+  2. **Joint Break Force** on `BreakableChain`: the break joint also snaps on its own when overloaded. Infinity (the default) turns this off.
+  3. **Code or UnityEvents**: call `BreakableChain.Break()`, for example from a button, a trigger or another object's `onBroken`.
+- Order on a break: the valid break event, then the joint is removed (lower part free), then the `BreakEffect` plays at the break point, then `onBreak` fires and the snap sound plays, then gravity takes over and the lower part falls, swings, hits walls and clinks.
+- **T** (test reset) re-hangs every chain.
+
+### Changing the physics
+On `BreakableChain` > **Physics**:
+- **Link Mass** (0.15): lighter links swing more when the worm hits them. The worm weighs 0.3 (Bouncy) or 2.5 (Rocky).
+- **Gravity Scale** (0.8): fall speed. The project gravity is high (37.5).
+- **Linear Damping** (0.25): air drag. Higher settles sooner.
+- **Angular Damping** (1.5): kills wiggle and jitter. Raise it if the chain looks nervous.
+- **Surface Type** (Metal): how the worm bounces off or lands on the chain.
+- **Link Layer**: the physics layer of the links (-1 uses the Chain object's layer). Links collide with whatever that layer collides with in *Project Settings > Physics 2D > Layer Collision Matrix*. Everything in the project is currently on `Default`, so chains hit all level geometry.
+- **Link Width**: collision thickness.
+
+### Changing the look
+- **Ring Sprites / Bar Sprites**: swap or add variants. Leave Bar Sprites empty to get rings on every link.
+- **Art Ring Pitch Pixels** (190): the ring-to-ring distance in the art, which keeps the art matched to Link Length. **Art Scale** makes the art bigger or smaller without touching physics.
+- **Tint**, **Sorting Order**.
+
+### Changing the chain sound
+`ChainSounds` (on the same object):
+- **Impact Clips**: metallic clinks for links hitting walls, the floor or the worm, picked at random.
+- **Break Clips**: the snap sound.
+- While both are empty, a synthesised metal clink and snap are used, so the chain is never silent. Untick **Use Generated Sounds When Empty** for silence.
+- No audio files exist in the project yet. Drop `.wav`/`.ogg` files into `Assets/Audio/` and drag them into these arrays.
+- Spam control:
+  - **Min Impact Speed** (2): softer contacts are silent.
+  - **Full Volume Speed** (12): the speed that plays at full volume. Volume scales with impact speed.
+  - **Min Interval** (0.07 s): the minimum gap between two clinks of this chain.
+  - **Max Per Second** (8): a hard cap.
+  - **Per Link Cooldown** (0.25 s): the same link cannot clink twice quickly.
+- **Pitch Range**, **Impact Volume**, **Break Volume**, **Spatial Blend** (0 = plain 2D).
+
+Sound never affects physics. It only listens to the chain's events.
+
+### Assigning a different break VFX
+- **Break Effect** field on `BreakableChain`. The prefab points to the `BreakEffect` component on the same object (dark ink shards).
+- Edit that component (count, colour, speed, size, life, Effect Scale), or drag in a `BreakEffect` from another object.
+- Leave it empty for no VFX.
+
+---
+
+## 2. Pulley / rope
+
+### Where it is
+- Prefab: **`Assets/Prefabs/Gameplay/PulleyRig.prefab`**: `PulleyRig (PulleySystem)` > `Wheel`, `Rope (PulleyRope + LineRenderer)`, `PlatformA`, `PlatformB`.
+- The wheel now uses the spoked pulley wheel from **`FG_Props_1_40`**.
+- Test area: `Area_I` from the same menu as the chain.
+
+### How the rope works
+- `PulleyRope` draws a `LineRenderer` from **Platform A**, up to the wheel, **around the top of the wheel** (it leaves and meets the rim at the real tangent points), and down to **Platform B**.
+- It is visual only, not a simulated rope, so it can never destabilise the rig.
+- It is redrawn every rendered frame **after** the platforms' Rigidbody2D interpolation. Previously it was updated in FixedUpdate, which made it lag and snap against the smoothly drawn platforms. The ends are glued to the platforms and can never visually detach.
+- When a platform goes down, its side gets longer and the other side shorter, because the ends follow the platforms and the wheel stays fixed.
+- It also shows in Edit mode, so you can see it while placing things.
+
+### Changing the rope's appearance
+On `Rope > PulleyRope`:
+- **Width**, **Color**, **Sorting Order**.
+- **Rope Material**: assign a material with a rope texture and tick **Tile Texture** to repeat it along the rope. Empty uses a plain coloured line.
+- **Attach Point A / B**: where the rope ties onto each platform, in the platform's local space. (0, 0.5) is the top centre.
+- **Wrap Radius**: the rope radius around the wheel. 0 uses `PulleySystem.wheelRadius`.
+- **Points Per Side / Points Over Wheel**: smoothness of the curve.
+
+### Elasticity / smoothing
+On `PulleyRope` > **Elasticity**. These are visual only, and the ends never move off the platforms.
+- **Sag** (0.04): a constant soft bow in the middle of each side. 0 is perfectly straight.
+- **Sway Amount** (0.035): how much platform starts, stops and landings make the rope sway.
+- **Sway Stiffness** (90) / **Sway Damping** (9): a quick small wobble that settles fast. Raise the damping (12+) for almost no wobble, or lower it for more life.
+- **Max Sway** (0.25): the limit on how far the rope can bow.
+
+### Changing the platform movement
+On `PulleyRig > PulleySystem`:
+- **Max Travel**: how far each platform can move up or down from its start.
+- **Move Speed**: platform speed per unit of weight difference.
+- **Max Speed**: a hard cap.
+- **Damping**: how quickly the speed follows the target. Higher is snappier, lower is floatier.
+- **End Ease** (0.6, new): the platforms slow down over this distance before the travel limit instead of stopping dead. This used to be a hard stop.
+- **Auto Return / Rest Offset**: with nobody on it, the rig eases back to this position.
+- **Counter Bias**: permanent extra weight on side B.
+- **Wheel Radius**: used for the wheel spin and the rope wrap.
+- Move `PlatformA` / `PlatformB` in the Scene view to set where they start. The positions are captured at Play.
+
+### How player weight affects it
+- It uses the existing Bouncy/Rocky system and nothing else. Each side's load is the platform's **Base Weight** plus the riding worm's real `WormPhysics.Mass` × **Player Weight Multiplier**.
+  - Bouncy (Squishy) has mass **0.3** and Rocky (Heavy) has mass **2.5**, so Rocky pulls about 8× harder and the platform sinks much faster. Switching material while standing (Space) changes the speed immediately.
+- New, **Landing Kick** (0.35): landing on a platform gives it a dip proportional to the impact force (worm mass × landing speed, taken from the worm's own impact event). A Rocky landing yanks the rig down and Bouncy barely moves it. Set 0 to turn it off.
+- The masses live in `ScriptableObjects/Worm/Worm_Squishy.asset` and `Worm_Heavy.asset`. Change them there, not on the pulley.
+
+---
+
+## 3. Rotating passage — `FG_Props_1_1`
+
+### Where it is configured
+- Scene **`MechanicsTest`** > `World` > `Area_B Break` > **`FG_Props_1_1`** (the hairy C-shaped ring in the cave).
+- Components: `SpriteRenderer` (art), `PolygonCollider2D` (walls, generated), `Rigidbody2D` (**Kinematic**), `Surface` (Lint), **`RotatingChamber`**.
+- What was wrong before: the ring was turned by a legacy **Animation** clip (`Animations/New Animation.anim`) on an object with no Rigidbody2D. That teleports the collider every frame, so the worm got pushed into it, snagged or blocked. The auto-traced collider also followed every hair spike and had a stray second piece. The Animation component is removed from this object (the clip file is untouched), and the collider is now a clean arc.
+
+### How rotation works
+- `RotatingChamber` turns the kinematic Rigidbody2D with `MoveRotation` in FixedUpdate, with smooth acceleration and braking.
+- Because it is a real moving body, the worm inside is moved by contacts and friction: it rides a little up the wall and settles. It is never teleported, and it cannot pass through the walls.
+- **Mode**:
+  - **PlayerTriggered** (used here):
+    1. The chamber waits with the opening facing **Entry Direction**.
+    2. When the worm has been inside for **Enter Delay** seconds, it turns (in **Direction**) until the opening faces **Exit Direction**.
+    3. The worm falls out.
+    4. After the worm has left plus **Return Delay**, it turns back and waits again.
+    5. **Give Up After**: if the worm stays inside at the exit, the chamber returns anyway.
+  - **Continuous**: it turns forever at Rotation Speed.
+  - **StopAtAngles**: it turns and pauses for **Pause At Stop** at each of the **Stop Angles**.
+- All directions are world angles of the opening: **0 = right, 90 = up, 180 = left, -90 = down**. Select the object to see the gizmos: cyan is where the opening points now, green is the entry, orange is the exit (yellow for the stops).
+
+### Inspector settings (`RotatingChamber`)
+- **Rotation Speed** (deg/s), **Direction** (Clockwise / CounterClockwise), **Acceleration** (lower = softer starts and stops, which keeps the worm stable).
+- **Use Start Direction + Start Direction**: the starting rotation for Continuous and StopAtAngles. PlayerTriggered always starts at Entry Direction.
+- **Start Automatically**: for Continuous and StopAtAngles. Off means you call `StartRotating()` from a UnityEvent or trigger. `StopRotating()` stops it smoothly.
+- **Stop Angles + Pause At Stop**: stopping at certain positions.
+- Events: **On Player Entered**, **On Start Turning**, **On Opening At Exit**, **On Player Left**. Hook sounds or a camera zone here.
+
+### How the player enters
+- The worm flies or rolls in through the opening. Here **Entry Direction = -30**, which faces the opening down-right towards the corridor the worm arrives from in `Area_B`.
+- "Inside" means the worm's centre is within the inner wall, which needs no trigger collider or layer setup. Quick fly-throughs shorter than **Enter Delay** (0.4 s) don't start it.
+
+### How the opening works and how to adjust the exit / fall position
+- The opening is a real gap in the generated collider, matched to the art. **Opening Local Angle** = 180 (the art opens to its left) and **Opening Width** = 54°.
+- **Exit Direction** (-100) is where the opening points when the worm should drop out. -90 is straight down. A few degrees past -90 *in the turning direction* works best, because the worm rides up the wall while the chamber turns. Move it to aim the drop at a different spot below.
+- **Wall Friction** (0.25) decides how far up the wall the worm is carried while turning (about 25° at 0.25, inside the 54° opening). Higher friction carries the worm further and can leave it beside the opening instead of over it.
+- Shape fields (**Ring Center, Inner Radius, Wall Thickness**) are in the sprite's own units and were measured from the art. Right-click the component > **Rebuild Collider** after changing them in the editor. **Generate Collider** off keeps a collider you drew yourself.
+- To reuse it elsewhere, drag the configured `FG_Props_1_1` from the Hierarchy into `Prefabs/Gameplay` to make a prefab, or add `RotatingChamber` to any ring sprite and adjust the shape fields.
+
+---
+
+## 4. Camera
+
+### Exactly where to adjust zoom
+1. Open the level scene (for example `MechanicsTest`).
+2. In the **Hierarchy**, select **`Main Camera`**.
+3. In the **Inspector**, open **Camera Follow 2D** (not the Camera component's own Size; the script sets that for you).
+4. Change **Orthographic Size**:
+   - It is half the visible height in world units. 14 means 28 units tall, and the width follows the screen aspect.
+   - **Bigger = wider view** (more level, smaller worm). **Smaller = closer**.
+   - It is now **14** in MechanicsTest (it was 9.9). Try 12–18.
+   - It updates the Game view immediately, even outside Play mode.
+
+### Exactly where to adjust follow
+Same component, under **Follow**:
+- **Follow Speed** (6, horizontal) / **Vertical Follow Speed** (4.5): how fast the camera catches up. Higher is snappier, lower is floatier. The camera uses SmoothDamp in LateUpdate after the worm's interpolation, so it stays smooth at any value without jitter or snapping.
+- **Dead Zone** (0.4, 0.6): the worm can move this far from the aim point before the camera reacts, so tiny bounces don't shake the view. Set it to (0, 0) for a tight follow.
+- **Look Ahead** (0.12 s) / **Max Look Ahead** (3): while flying, the view leans in the direction of travel so you see where you are going. Set 0 to turn it off.
+
+### Exactly where to adjust offsets
+- **Offset** (x, y), in units added to the worm's position. (0, 2) puts the worm slightly below the centre so you see more above. (3, 2) shows more to the right, and (0, -2) shows more below.
+
+### Bounds
+- **Use Bounds** plus **Bounds Min / Max**, or drag any Collider2D covering the level into **Bounds Collider**. The camera then never shows outside it. A cyan box gizmo appears when the camera is selected.
+
+### Closer / wider camera, and different settings per level
+- **Whole level wider or closer**: change Orthographic Size on that scene's Main Camera. Each scene has its own Main Camera, so each level automatically keeps its own values.
+- **Same settings in many levels**: on the Camera Follow 2D component, click the **Preset** icon (slider icon, top right of the component) > *Save current to...*. In another level, apply that preset to its Main Camera.
+- **Part of a level wider or closer** (for example zoom out over a big drop):
+  1. Create an empty GameObject.
+  2. Add a **BoxCollider2D** and **Camera Zone** (`Scripts/Core/CameraZone.cs`).
+  3. Size the box over the area. It becomes a trigger automatically.
+  4. Set the zone's Orthographic Size (and optionally its Offset).
+
+  While the worm is inside, the camera blends to those values (**Zoom Smooth Time** on the camera). When it leaves, the camera blends back. If zones overlap, the highest **Priority** wins.
+- No Cinemachine is installed in the project, so none was added. This component does the job without the extra package.
+
+---
+
+## 5. Quality pass: what was found and fixed
+- **Rope visually lagging and disconnecting**: it was updated in FixedUpdate while the platforms are interpolated. It now updates in LateUpdate from the interpolated positions. The wheel spin is computed the same way (smooth, no drift).
+- **Pulley platforms snapping** at the travel limit (hard stop): they now ease out (`End Ease`).
+- **Rotating chamber trapping the worm**: the collider was teleported by an Animation and traced every hair spike, with a stray second piece. It is now a kinematic body with a clean collider and an opening.
+- **Worm on rotating or moving bodies**: the "settled" check used the ground body's linear velocity only, so a worm resting in a turning chamber looked like it was sliding. It now uses the velocity of the exact ground point, including spin (`GroundDetector.Point` + `GetPointVelocity`). Nothing changes on static ground.
+- **Old chain** was two big bodies with one hinge, and the lower half was one giant collider. It is now a link chain with per-link collision, Continuous detection, self-collision off and damping.
+- **Unnecessary per-step work**: `PulleyPlatform` re-configured its Rigidbody2D every physics step. Now that happens once. The old chain polled for a broken joint every step; it now uses `OnJointBreak2D`.
+- **Camera jitter, lag and snapping**: it now uses SmoothDamp in LateUpdate with a dead zone and look-ahead, and the zoom is owned by one Inspector field.
+- `BreakableObject` gained two switches (**Disable Colliders On Break**, **Hide Sprite On Break**, both on by default so existing brittles behave exactly as before) and a `Broken` event, so composite objects like the chain can use the same break rule.
+
+## 6. First things to check in Play mode (not verified here)
+1. `Area_B`: launch into the ring from the corridor on the right. It should turn clockwise and drop you into the shaft below. If the worm misses the opening, adjust **Entry Direction**. If it doesn't fall out, adjust **Exit Direction** or lower **Wall Friction**.
+2. Run **Project Juice > Add Chain+Pulley Test Areas**, then jump to `H` and `I` with `[ ]` or the digit keys:
+   - Hit the chains as Rocky (they should snap, with VFX and a snap sound, and the lower part should clink against the wall).
+   - Stand on the pulley as Bouncy, then switch to Rocky.
+3. If a chain jitters, raise **Angular Damping** a little or lower **Link Count**. If it stretches when Rocky hits it, raise **Link Mass** slightly.
+4. Camera: try Orthographic Size 12–18 and keep what feels right.
