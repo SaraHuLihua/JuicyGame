@@ -172,14 +172,25 @@ MonoBehaviour:
   trajectoryPreviewLength: 30
   previewBounces: 3
   previewStep: 0.016666668
-  dotSpacing: 0.55
-  dotSize: 0.16
+  maxPreviewCasts: 240
+  previewRefresh: 0.1
+  dotSpacing: 0.5
+  dotSize: 0.2
+  dotEndScale: 0.45
+  trajectoryDotSprites:
+  - {fileID: 2576242568859220030, guid: 805062611a21f4f06842e8f60a5c8040, type: 3}
+  - {fileID: -284997100, guid: 805062611a21f4f06842e8f60a5c8040, type: 3}
+  landingMarkerSprite: {fileID: 128928699, guid: 805062611a21f4f06842e8f60a5c8040, type: 3}
+  landingMarkerSize: 1.6
+  trajectoryColor: {r: 1, g: 1, b: 1, a: 0.95}
   aimArcSprite: {fileID: 1732168339, guid: 805062611a21f4f06842e8f60a5c8040, type: 3}
   aimArrowSprite: {fileID: 1854894346, guid: 805062611a21f4f06842e8f60a5c8040, type: 3}
   aimFeedbackColor: {r: 1, g: 1, b: 1, a: 1}
-  arcWidth: {x: 1.6, y: 2.4}
-  arcDrop: 0.15
-  arcFollowsAim: 0
+  arcWidth: {x: 1.3, y: 1.8}
+  arcPlacement: 0
+  arcDrop: 0.2
+  arcPullBack: 0.5
+  arcStretch: 0.6
   arrowLength: {x: 0.7, y: 1.9}
   arrowGap: 0.75
   arrowWidth: 1.3

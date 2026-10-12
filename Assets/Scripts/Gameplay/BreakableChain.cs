@@ -100,6 +100,9 @@ namespace ProjectJuice
         public float sleepSpeed = 0.4f;
         [Tooltip("Continuous collision on every link (expensive with many links). Off = only the falling part after a break uses it.")]
         public bool continuousCollision = false;
+        [Tooltip("Most physics bodies one chain may build. A longer chain keeps all its drawn rings but groups them, several per body " +
+                 "(e.g. 125 rings -> 32 bodies of 4 rings). Lower = lighter but stiffer. 0 = one body per ring (heavy).")]
+        [Min(0)] public int maxPhysicsLinks = 40;
 
         [Header("Break point")]
         public bool breakable = true;
@@ -162,6 +165,7 @@ namespace ProjectJuice
         bool built;
         int builtCount;
         float builtLinkLength;
+        int builtGroup = 1; // drawn rings per physics body
         float builtWidth;
 
         /// <summary>World position of the break point (between link breakAtLink-1 and breakAtLink).</summary>
@@ -176,7 +180,7 @@ namespace ProjectJuice
             }
         }
 
-        int ClampedBreakIndex(int count) { return Mathf.Clamp(breakAtLink, 1, Mathf.Max(1, count - 1)); }
+        int ClampedBreakIndex(int count) { return Mathf.Clamp(Mathf.RoundToInt(breakAtLink / (float)Mathf.Max(1, built ? builtGroup : 1)), 1, Mathf.Max(1, count - 1)); }
 
         bool UsesAnchor { get { return bottom == EndMode.PinnedInPlace && bottomAnchor != null; } }
 
@@ -238,8 +242,10 @@ namespace ProjectJuice
             if (built) return;
             built = true;
 
-            builtCount = PreviewCount();
-            builtLinkLength = PreviewLinkLength();
+            int rings = PreviewCount();
+            builtGroup = maxPhysicsLinks > 0 ? Mathf.Max(1, Mathf.CeilToInt(rings / (float)maxPhysicsLinks)) : 1;
+            builtCount = Mathf.Max(2, Mathf.CeilToInt(rings / (float)builtGroup));
+            builtLinkLength = PreviewLinkLength() * rings / builtCount; // same total length as the drawn rings
             builtWidth = PreviewWidth();
             if (transform.parent == null || IsUnitScale(transform.parent.lossyScale))
                 transform.localScale = Vector3.one; // the scale has been converted, keep bodies undistorted
@@ -263,7 +269,7 @@ namespace ProjectJuice
 
                 Rigidbody2D rb = go.AddComponent<Rigidbody2D>();
                 rb.bodyType = RigidbodyType2D.Dynamic;
-                rb.mass = Mathf.Max(0.01f, linkMass);
+                rb.mass = Mathf.Max(0.01f, linkMass * builtGroup); // same total weight however the rings are grouped
                 rb.gravityScale = gravityScale;
                 SetDamping(rb, linearDamping, angularDamping);
                 rb.interpolation = RigidbodyInterpolation2D.Interpolate;
@@ -326,7 +332,7 @@ namespace ProjectJuice
                     for (int b = a + 1; b < cols.Count && b <= a + reach; b++)
                         Physics2D.IgnoreCollision(cols[a], cols[b], true);
             }
-            if (builtCount > 60)
+            if (builtCount > 60 || builtCount * builtGroup > 400)
                 Debug.LogWarning("[BreakableChain] " + name + " builds " + builtCount + " physics links (Link Count x Transform Scale Y). " +
                                  "Every link is a Rigidbody2D: lower Link Count (or the Y scale) if several chains make the game slow.", this);
             lastDisturbed = Time.time;
@@ -419,14 +425,24 @@ namespace ProjectJuice
 #endif
         }
 
-        void BuildVisual(Transform parent, int i)
+        void BuildVisual(Transform parent, int link)
+        {
+            // One physics link carries builtGroup drawn rings/bars, laid from its top (+y) down.
+            float vis = builtLinkLength / builtGroup;
+            for (int k = 0; k < builtGroup; k++)
+            {
+                Transform t = BuildVisualPiece(parent, link * builtGroup + k, vis);
+                if (t != null) t.localPosition = new Vector3(0f, builtLinkLength * 0.5f - vis * (k + 0.5f), 0f);
+            }
+        }
+
+        Transform BuildVisualPiece(Transform parent, int i, float vis)
         {
             Sprite sprite = PickSprite(i);
             if (sprite == null)
             {
-                PlaceholderSprites.Make("Visual", parent, PlaceholderSprites.Square,
-                    (i % 2 == 0) ? tint : tint * 0.75f, Vector2.zero, new Vector2(builtWidth, builtLinkLength), sortingOrder);
-                return;
+                return PlaceholderSprites.Make("Visual", parent, PlaceholderSprites.Square,
+                    (i % 2 == 0) ? tint : tint * 0.75f, Vector2.zero, new Vector2(builtWidth, vis), sortingOrder).transform;
             }
             GameObject v = new GameObject("Visual");
             v.layer = parent.gameObject.layer;
@@ -437,6 +453,7 @@ namespace ProjectJuice
             sr.sprite = sprite;
             sr.color = tint;
             sr.sortingOrder = sortingOrder + (IsRingLink(i) ? 1 : 0); // rings drawn over the bars threading through them
+            return v.transform;
         }
 
         bool IsRingLink(int i)
@@ -456,7 +473,7 @@ namespace ProjectJuice
         {
             // One link = half a ring pitch in the art (ring, bar, ring, bar...).
             float pitchUnits = Mathf.Max(1f, artRingPitchPixels) / Mathf.Max(1f, s.pixelsPerUnit);
-            float ll = built ? builtLinkLength : PreviewLinkLength();
+            float ll = built ? builtLinkLength / builtGroup : PreviewLinkLength(); // one drawn ring/bar, whatever the physics grouping
             return (2f * ll / pitchUnits) * Mathf.Max(0.01f, artScale);
         }
 

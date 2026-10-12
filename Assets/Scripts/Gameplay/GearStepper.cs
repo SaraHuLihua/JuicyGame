@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -53,6 +54,10 @@ namespace ProjectJuice
         [Tooltip("Raised at the start of every click (sound, particles, other mechanisms).")]
         public UnityEvent onStep;
 
+        [Header("Performance")]
+        [Tooltip("Simplifies the PolygonCollider2D at Play (world units of error). FG_Props_1_45 has ~316 points; 0.03 keeps the teeth and drops most of them. 0 = leave it as is.")]
+        [Min(0f)] public float colliderSimplify = 0.03f;
+
         enum Phase { Waiting, Turning, Settling }
 
         Rigidbody2D body;
@@ -64,6 +69,7 @@ namespace ProjectJuice
         float toAngle;     // rotation at the end of the current click (unwrapped degrees)
         float angle;
         float crushTimer;
+        float sentAngle = float.NaN;
         static readonly ContactPoint2D[] contacts = new ContactPoint2D[16];
 
         public bool IsTurning { get { return turning; } }
@@ -79,7 +85,8 @@ namespace ProjectJuice
             body = GetComponent<Rigidbody2D>();
             body.bodyType = RigidbodyType2D.Kinematic;
             body.interpolation = RigidbodyInterpolation2D.Interpolate;
-            body.sleepMode = RigidbodySleepMode2D.NeverSleep;
+            body.sleepMode = RigidbodySleepMode2D.StartAwake; // MoveRotation wakes it for every click
+            SimplifyCollider();
             angle = body.rotation;
             fromAngle = toAngle = angle;
             turning = startAutomatically;
@@ -118,8 +125,28 @@ namespace ProjectJuice
                     break;
                 }
             }
-            body.MoveRotation(angle);
+            // Only move while the angle changes: a still gear costs the physics nothing between clicks.
+            if (angle != sentAngle) { body.MoveRotation(angle); sentAngle = angle; }
             CheckCrush(dt);
+        }
+
+        void SimplifyCollider()
+        {
+            PolygonCollider2D poly = GetComponent<PolygonCollider2D>();
+            if (poly == null || colliderSimplify <= 0f) return;
+            float scale = Mathf.Max(0.0001f, Mathf.Max(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.y)));
+            float tol = colliderSimplify / scale; // the points are in local space
+            List<Vector2> src = new List<Vector2>();
+            List<Vector2> dst = new List<Vector2>();
+            for (int i = 0; i < poly.pathCount; i++)
+            {
+                src.Clear();
+                poly.GetPath(i, src);
+                if (src.Count < 8) continue;
+                dst.Clear();
+                LineUtility.Simplify(src, tol, dst);
+                if (dst.Count >= 3 && dst.Count < src.Count) poly.SetPath(i, dst);
+            }
         }
 
         // The collider in a contact that does not belong to the worm (works whichever way round Unity reports it).
@@ -166,6 +193,14 @@ namespace ProjectJuice
             phase = Phase.Turning;
             timer = 0f;
             StepCount++;
+            // The gear may have slept between clicks: wake whatever rests on it so the teeth push it for real.
+            body.WakeUp();
+            int n = body.GetContacts(contacts);
+            for (int i = 0; i < n; i++)
+            {
+                Collider2D c = contacts[i].collider != null && contacts[i].collider.attachedRigidbody == body ? contacts[i].otherCollider : contacts[i].collider;
+                if (c != null && c.attachedRigidbody != null && c.attachedRigidbody != body) c.attachedRigidbody.WakeUp();
+            }
             if (audioSource != null) audioSource.PlayOneShot(clickSound, clickVolume);
             onStep.Invoke();
         }
