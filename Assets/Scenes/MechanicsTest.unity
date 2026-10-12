@@ -8770,6 +8770,14 @@ PrefabInstance:
       value: 4.5
       objectReference: {fileID: 0}
     - target: {fileID: 4820468035384370244, guid: db57398ddd7594c06a02eb103591222b, type: 3}
+      propertyPath: rockyDeath.Array.size
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4820468035384370244, guid: db57398ddd7594c06a02eb103591222b, type: 3}
+      propertyPath: bouncyDeath.Array.size
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4820468035384370244, guid: db57398ddd7594c06a02eb103591222b, type: 3}
       propertyPath: 'rockyIdle.Array.data[0]'
       value: 
       objectReference: {fileID: 21300000, guid: 21a1f09713e6042909e13cfacd65e167, type: 3}
@@ -8814,6 +8822,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 21300000, guid: d0e258297bea7456380ff802a787970c, type: 3}
     - target: {fileID: 4820468035384370244, guid: db57398ddd7594c06a02eb103591222b, type: 3}
+      propertyPath: 'rockyDeath.Array.data[4]'
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 4820468035384370244, guid: db57398ddd7594c06a02eb103591222b, type: 3}
       propertyPath: rockyToBouncy.Array.size
       value: 4
       objectReference: {fileID: 0}
@@ -8833,6 +8845,10 @@ PrefabInstance:
       propertyPath: 'bouncyDeath.Array.data[3]'
       value: 
       objectReference: {fileID: 21300000, guid: b379d108fd8e74a06894268008b5efdd, type: 3}
+    - target: {fileID: 4820468035384370244, guid: db57398ddd7594c06a02eb103591222b, type: 3}
+      propertyPath: 'bouncyDeath.Array.data[4]'
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 4820468035384370244, guid: db57398ddd7594c06a02eb103591222b, type: 3}
       propertyPath: 'bouncyToRocky.Array.data[0]'
       value: 
